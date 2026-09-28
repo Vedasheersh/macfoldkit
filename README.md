@@ -97,6 +97,12 @@ The deterministic fixed-order ProteinMPNN objective is a starting point, not a
 complete design-quality filter. Refold candidates and assess the intended task.
 `--device cpu` provides a reference path. See [design scope](docs/design.md).
 
+A separate [full AF2-guided design experiment](experiments/mosaic_af2/README.md)
+completes de novo monomer optimization, ProteinMPNN redesign and independent
+Boltz2 refolding on the Mac. It remains outside the released CLI because full
+CPU/MPS gradients differ by roughly 3% and design-quality validation is limited.
+See also the [BindCraft2 Mac feasibility audit](docs/bindcraft2-feasibility.md).
+
 ## Evidence
 
 The underlying optimized Boltz runner was tested on monomers and complexes up to

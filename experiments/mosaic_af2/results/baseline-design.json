@@ -1,0 +1,66 @@
+{
+  "platform": "mps",
+  "length": 64,
+  "seed": 7,
+  "model": "model_1_multimer_v3",
+  "precision": "float32",
+  "forward_passes": 1,
+  "initial_loss": 5.792942523956299,
+  "initial_aux": [
+    {
+      "plddt": 0.5845228433609009
+    },
+    {
+      "bb_pae": 15.789712905883789
+    },
+    {
+      "intra_contact": -4.989672660827637
+    },
+    {
+      "radius_of_gyration": 18.427745819091797
+    },
+    {
+      "helix": -0.5282012820243835
+    }
+  ],
+  "compile_and_first_gradient_seconds": 3.7841745000041556,
+  "warm_gradient_seconds": 0.523754916008329,
+  "versions": {
+    "jax": "0.11.2",
+    "jaxlib": "0.11.2",
+    "jax-mps": "0.11.0",
+    "equinox": "0.13.8"
+  },
+  "scope": "Small de novo monomer, full AF2 confidence/structure gradients; not binder design or experimental validation.",
+  "optimization_seconds": 79.24529162500403,
+  "steps": 150,
+  "best_soft_loss": 1.7460758686065674,
+  "candidates": [
+    {
+      "name": "hallucinated",
+      "sequence": "SPWVRWMIRWFRRFYRWCRKDCWREVIRRFPIGNGREAWIFFRKCSRFCWKKYWWFREMLGGLP",
+      "design_plddt": 0.7828654050827026
+    },
+    {
+      "name": "mpnn_1",
+      "sequence": "SPAAAAVAAALAALAAAGRAAAEAAVAAAYPGGDPAAGAAAAEALAAAVDAEVAAAAAAAAALP"
+    },
+    {
+      "name": "mpnn_2",
+      "sequence": "SPARAAAEAALAAARAAGRAEALAEVRARYPGGDPAAGAALLAALLAAADAEVEALAAALAALP"
+    }
+  ],
+  "max_rss_bytes": 1554726912,
+  "total_seconds": 87.27604433300439,
+  "device_memory_stats": {
+    "num_allocs": -1,
+    "bytes_in_use": 382225339,
+    "peak_bytes_in_use": 1122488623,
+    "largest_alloc_size": -1,
+    "bytes_limit": 24481313587,
+    "bytes_reserved": -1,
+    "peak_bytes_reserved": -1,
+    "largest_free_block_bytes": -1,
+    "pool_bytes": 1783211405
+  }
+}
