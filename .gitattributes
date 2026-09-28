@@ -1,0 +1,2 @@
+# Preserve the original public structure file byte for byte.
+examples/*.cif whitespace=-blank-at-eol
