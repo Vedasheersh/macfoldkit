@@ -1,0 +1,965 @@
+{
+  "platform": "mps",
+  "cases": [
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "upstream",
+      "value": 0.2987455427646637,
+      "max_gradient_error": 1.0,
+      "nonzeros": 0
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "corrected",
+      "value": 0.2987455427646637,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "upstream",
+      "value": 0.1499878466129303,
+      "max_gradient_error": 0.5,
+      "nonzeros": 0
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "corrected",
+      "value": 0.1499878466129303,
+      "max_gradient_error": 0.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 4,
+      "method": "upstream",
+      "value": -0.21618850529193878,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 4,
+      "method": "corrected",
+      "value": -0.21618850529193878,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 5,
+      "method": "upstream",
+      "value": -0.21618850529193878,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": false,
+      "k": 5,
+      "method": "corrected",
+      "value": -0.21618850529193878,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "upstream",
+      "value": -0.0,
+      "max_gradient_error": 1.0,
+      "nonzeros": 0
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "corrected",
+      "value": -0.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "upstream",
+      "value": 0.0,
+      "max_gradient_error": 0.5,
+      "nonzeros": 0
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "corrected",
+      "value": 0.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 4,
+      "method": "upstream",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 4,
+      "method": "corrected",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 5,
+      "method": "upstream",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        4
+      ],
+      "tied": true,
+      "k": 5,
+      "method": "corrected",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "upstream",
+      "value": 2.9791760444641113,
+      "max_gradient_error": 1.0,
+      "nonzeros": 1
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "corrected",
+      "value": 2.9791760444641113,
+      "max_gradient_error": 0.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "upstream",
+      "value": 1.5503466129302979,
+      "max_gradient_error": 0.5,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "corrected",
+      "value": 1.5503466129302979,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 4,
+      "method": "upstream",
+      "value": -0.23916776478290558,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 4,
+      "method": "corrected",
+      "value": -0.23916776478290558,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 5,
+      "method": "upstream",
+      "value": -0.23916776478290558,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": false,
+      "k": 5,
+      "method": "corrected",
+      "value": -0.23916776478290558,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "upstream",
+      "value": 2.0,
+      "max_gradient_error": 1.0,
+      "nonzeros": 1
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "corrected",
+      "value": 2.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "upstream",
+      "value": 1.0,
+      "max_gradient_error": 0.5,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "corrected",
+      "value": 1.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 4,
+      "method": "upstream",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 4,
+      "method": "corrected",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 5,
+      "method": "upstream",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        2,
+        4
+      ],
+      "tied": true,
+      "k": 5,
+      "method": "corrected",
+      "value": -0.25,
+      "max_gradient_error": 0.0,
+      "nonzeros": 8
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "upstream",
+      "value": 3.544614791870117,
+      "max_gradient_error": 1.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "corrected",
+      "value": 3.544614791870117,
+      "max_gradient_error": 0.0,
+      "nonzeros": 3
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "upstream",
+      "value": 2.058885335922241,
+      "max_gradient_error": 0.5,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "corrected",
+      "value": 2.058885335922241,
+      "max_gradient_error": 0.0,
+      "nonzeros": 6
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 8,
+      "method": "upstream",
+      "value": -3.2446775436401367,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 8,
+      "method": "corrected",
+      "value": -3.2446775436401367,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 9,
+      "method": "upstream",
+      "value": -3.2446775436401367,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 9,
+      "method": "corrected",
+      "value": -3.2446775436401367,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "upstream",
+      "value": 3.0,
+      "max_gradient_error": 1.0,
+      "nonzeros": 2
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "corrected",
+      "value": 3.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 3
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "upstream",
+      "value": 1.5,
+      "max_gradient_error": 0.5,
+      "nonzeros": 4
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "corrected",
+      "value": 1.5,
+      "max_gradient_error": 0.0,
+      "nonzeros": 6
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 8,
+      "method": "upstream",
+      "value": -3.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 8,
+      "method": "corrected",
+      "value": -3.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 9,
+      "method": "upstream",
+      "value": -3.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 9,
+      "method": "corrected",
+      "value": -3.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 24
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "upstream",
+      "value": 1075.127685546875,
+      "max_gradient_error": 1.0,
+      "nonzeros": 31
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "corrected",
+      "value": 1075.127685546875,
+      "max_gradient_error": 0.0,
+      "nonzeros": 32
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "upstream",
+      "value": 967.3575439453125,
+      "max_gradient_error": 0.5,
+      "nonzeros": 62
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "corrected",
+      "value": 967.3575439453125,
+      "max_gradient_error": 0.0,
+      "nonzeros": 64
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 32,
+      "method": "upstream",
+      "value": -21.654041290283203,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 32,
+      "method": "corrected",
+      "value": -21.654041290283203,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 33,
+      "method": "upstream",
+      "value": -21.654041290283203,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": false,
+      "k": 33,
+      "method": "corrected",
+      "value": -21.654041290283203,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "upstream",
+      "value": 1080.0,
+      "max_gradient_error": 1.0,
+      "nonzeros": 31
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "corrected",
+      "value": 1080.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 32
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "upstream",
+      "value": 985.5,
+      "max_gradient_error": 0.5,
+      "nonzeros": 62
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "corrected",
+      "value": 985.5,
+      "max_gradient_error": 0.0,
+      "nonzeros": 64
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 32,
+      "method": "upstream",
+      "value": -22.40625,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 32,
+      "method": "corrected",
+      "value": -22.40625,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 33,
+      "method": "upstream",
+      "value": -22.40625,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        32,
+        32
+      ],
+      "tied": true,
+      "k": 33,
+      "method": "corrected",
+      "value": -22.40625,
+      "max_gradient_error": 0.0,
+      "nonzeros": 1024
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "upstream",
+      "value": 17.629053115844727,
+      "max_gradient_error": 1.0,
+      "nonzeros": 5
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 1,
+      "method": "corrected",
+      "value": 17.629053115844727,
+      "max_gradient_error": 0.0,
+      "nonzeros": 6
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "upstream",
+      "value": 14.11684513092041,
+      "max_gradient_error": 0.5,
+      "nonzeros": 10
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 2,
+      "method": "corrected",
+      "value": 14.11684513092041,
+      "max_gradient_error": 0.0,
+      "nonzeros": 12
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 8,
+      "method": "upstream",
+      "value": -6.758116722106934,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 8,
+      "method": "corrected",
+      "value": -6.758116722106934,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 9,
+      "method": "upstream",
+      "value": -6.758116722106934,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": false,
+      "k": 9,
+      "method": "corrected",
+      "value": -6.758116722106934,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "upstream",
+      "value": 14.0,
+      "max_gradient_error": 1.0,
+      "nonzeros": 5
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 1,
+      "method": "corrected",
+      "value": 14.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 6
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "upstream",
+      "value": 12.5,
+      "max_gradient_error": 0.5,
+      "nonzeros": 10
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 2,
+      "method": "corrected",
+      "value": 12.5,
+      "max_gradient_error": 0.0,
+      "nonzeros": 12
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 8,
+      "method": "upstream",
+      "value": -8.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 8,
+      "method": "corrected",
+      "value": -8.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 9,
+      "method": "upstream",
+      "value": -8.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    },
+    {
+      "shape": [
+        2,
+        3,
+        8
+      ],
+      "tied": true,
+      "k": 9,
+      "method": "corrected",
+      "value": -8.0,
+      "max_gradient_error": 0.0,
+      "nonzeros": 48
+    }
+  ]
+}

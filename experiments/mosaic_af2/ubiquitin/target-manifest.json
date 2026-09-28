@@ -1,0 +1,21 @@
+{
+  "scope": "Computational test only; no evidence of binding.",
+  "source": "outputs/macfoldkit/examples/1ubq.cif",
+  "source_sha256": "056f98710cb2b36f633c45e41902a02eb446e82871da21ff2dd44f74a56ca0f6",
+  "cleaned_cif_sha256": "f33c07b4af9930f499ecc76e343b5665ed754bcb73a5af20e3df051f4c711500",
+  "source_chain": "A",
+  "target_sequence": "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG",
+  "target_length": 76,
+  "residue_numbers": [
+    1,
+    76
+  ],
+  "template_backbone_complete": true,
+  "original_chain_records": [
+    {
+      "chain": "A",
+      "residues": 134
+    }
+  ],
+  "network_used": false
+}

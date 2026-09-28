@@ -1,5 +1,11 @@
 # Full Mosaic design experiment on Apple Silicon
 
+The current adapter includes a corrected contact-loss backward pass and a
+[48-residue binder / 76-residue ubiquitin experiment](ubiquitin/README.md).
+The CPU/MPS numerical gate passes for that exact complex. The monomer results
+below are historical trajectories from before the backward correction; they
+remain available as evidence of the original experiment.
+
 Two complete **64-residue de novo monomer** workflows ran on an M5 Pro:
 random relaxed sequence → full AF2 confidence/structure objective → 150 Mosaic
 optimization steps → hard-sequence backbone prediction → two ProteinMPNN
@@ -42,22 +48,42 @@ failed candidates remain in the [baseline](results/baseline-refolding.json) and
 [joint](results/joint-refolding.json) reports. This is two trajectories with one
 initialization seed, not a design success-rate benchmark.
 
-## Numerical status: unresolved gradient discrepancy
+## Numerical status: contact-gradient defect isolated
 
 Full structure/confidence gradients are materially different from the earlier
 distogram-only probe. CPU and MPS forward objective values agreed within 1.5e-6,
 but full raw gradients differed by **3.24% relative L2 at 32 residues**, **3.00%
 at 64 residues**, and **2.95% for the joint 64-residue objective**. Gradient
-cosines were approximately 0.99975. These failed the initially attempted 0.5%
-relative-L2 gate; the cause has not been isolated. The trajectories therefore
-remained explicitly experimental rather than being promoted into the CLI.
-See [raw-gradient comparisons](results/gradient-parity.json).
+cosines were approximately 0.99975. These failed the original 0.5% relative-L2
+gate. See the [historical comparisons](results/gradient-parity.json).
+
+The defect is now isolated: the tested MPS backend drops the first row's
+cotangents in a descending-sort contact reduction. The experiment-local
+`metal_losses.py` keeps the forward equation and selected tie subgradient while
+avoiding that scatter in reverse mode. Its analytical regression passes all
+40 cases on CPU and MPS; the original fails 20/40 MPS cases. Complete corrected
+contact-loss gradients agree with CPU to relative L2 below 4.5e-7. See the
+[reproducer and source analysis](SCATTER_BACKWARD_BUG.md).
+
+The corrected **joint 64-residue** raw gradient differs by **0.149%**, with
+**0.163%** error after simplex-tangent projection. The **124-residue complex**
+differs by **0.0479%** raw / **0.0494%** tangent. Both pass the unchanged 0.5%
+gate; scalar losses differ by 1.43e-6 and zero respectively. The corrected CPU
+monomer loss and gradient match the original CPU result exactly. Residual GPU
+differences remain; this does not establish parity for arbitrary Mosaic models,
+inputs, losses, multi-recycle gradients, or forward-mode differentiation.
+The earlier trajectory artifacts are not retroactively validated by the fix.
+Saved evidence: [monomer](results/corrected-monomer-parity.json),
+[complex](results/corrected-complex-parity.json),
+[analytic CPU](results/contact-regression-cpu.json),
+[analytic MPS](results/contact-regression-mps.json), and
+[complete contact losses](results/contact-loss-parity.json).
 
 Every optimization evaluation checked the raw loss and gradient for finiteness
 before Mosaic's usual `nan_to_num` handling. The wrapper saves the actual best
 evaluated sequence and loss together, including a final reevaluation. The final
 portable launcher also verified the actual gradient array was on `MPS:0`.
-These checks do not resolve the CPU/MPS discrepancy.
+The comparison script also checks identical initialization, features and settings.
 
 Mosaic uses a hard-PSSM straight-through estimator; the ProteinMPNN recovery
 term stops gradients through sampled sequences. This run differentiates the
@@ -69,9 +95,10 @@ that intentional surrogate gradient.
 
 The single-checkpoint loader and direct one-pass wrapper are adapted from
 [Mosaic's MIT-licensed AF2 wrapper](https://github.com/escalante-bio/mosaic/blob/b94b9d4eb9907a700a6d78ed2d29d3704c5df46c/src/mosaic/models/af2.py).
-The model equations and upstream loss/optimizer implementations are retained.
-Only model 1 Multimer-v3 is loaded; inputs are single-chain, with one MSA row,
-FP32, rematerialization and one forward pass. No custom forward-only Metal
+The model equations and upstream optimizer are retained, with the contact VJP
+workaround above. Only model 1 Multimer-v3 is loaded; inputs have one MSA row,
+FP32, rematerialization and one forward pass. Optional binder mode adds one fixed
+target sequence and target template. No custom forward-only Metal
 attention kernels are used.
 
 Upstream's single-iteration recycle `lax.scan` stalled for over four minutes in

@@ -99,8 +99,12 @@ complete design-quality filter. Refold candidates and assess the intended task.
 
 A separate [full AF2-guided design experiment](experiments/mosaic_af2/README.md)
 completes de novo monomer optimization, ProteinMPNN redesign and independent
-Boltz2 refolding on the Mac. It remains outside the released CLI because full
-CPU/MPS gradients differ by roughly 3% and design-quality validation is limited.
+Boltz2 refolding on the Mac, and adds a bounded ubiquitin binder workflow.
+A contact-loss backward workaround reduced the tested full CPU/MPS gradient
+error from roughly 3% to 0.15% (monomer) and 0.048% (complex). It remains outside
+the released CLI because backend and design-quality validation are limited.
+The first full binder workflow completed in 5.6 minutes before independent
+refolding; all three candidates failed the frozen computational screen.
 See also the [BindCraft2 Mac feasibility audit](docs/bindcraft2-feasibility.md).
 
 ## Evidence

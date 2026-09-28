@@ -1,0 +1,140 @@
+{
+  "protocol_version": "ubiquitin-binder-demo-v1",
+  "scope": "Computational binder-design workflow demonstration, not evidence of binding.",
+  "target": {
+    "pdb": "1UBQ",
+    "input": "ubiquitin-target.cif",
+    "chain": "A",
+    "length": 76,
+    "template": true,
+    "msa": "empty",
+    "sequence_fixed": true
+  },
+  "binder": {
+    "length": 48,
+    "epitope": null,
+    "initialization": "NumPy float32 Gumbel(logit_scale=0.5) then softmax",
+    "seed": 7
+  },
+  "model": {
+    "name": "model_1_multimer_v3",
+    "precision": "float32",
+    "forward_passes": 1,
+    "dropout": false,
+    "objective_key": 7,
+    "source_sha": "b94b9d4eb9907a700a6d78ed2d29d3704c5df46c"
+  },
+  "optimization": {
+    "algorithm": "simplex_APGM",
+    "steps": 150,
+    "stepsize": 0.2,
+    "momentum": 0.0,
+    "pick": "minimum finite evaluated total objective, including final iterate",
+    "extra_seeds": []
+  },
+  "loss": [
+    {
+      "type": "PLDDTLoss",
+      "weight": 1.0
+    },
+    {
+      "type": "WithinBinderContact",
+      "weight": 1.0,
+      "num_contacts_per_residue": 8,
+      "max_contact_distance": 14.0,
+      "min_sequence_separation": 8
+    },
+    {
+      "type": "BinderTargetContact",
+      "weight": 1.0,
+      "contact_distance": 8.0,
+      "paratope_size": 12,
+      "epitope_idx": null
+    },
+    {
+      "type": "WithinBinderPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "BinderTargetPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "TargetBinderPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "IPTMLoss",
+      "weight": 0.25
+    },
+    {
+      "type": "DistogramRadiusOfGyration",
+      "weight": 0.1
+    },
+    {
+      "type": "HelixLoss",
+      "weight": 0.3
+    },
+    {
+      "type": "InverseFoldingSequenceRecovery",
+      "weight": 5.0,
+      "temp": 0.1,
+      "num_samples": 4,
+      "jacobi_iterations": 10
+    }
+  ],
+  "redesign": {
+    "method": "mosaic.losses.protein_mpnn.inverse_fold",
+    "binder_length": 48,
+    "temperature": 0.1,
+    "jacobi_iterations": 10,
+    "seeds": [
+      107,
+      108
+    ],
+    "preserve_target": true,
+    "candidates": [
+      "hallucinated",
+      "mpnn_1",
+      "mpnn_2"
+    ]
+  },
+  "independent_refold": {
+    "model": "Synthyra/Boltz2",
+    "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+    "seeds": [
+      7,
+      11
+    ],
+    "profile": "balanced",
+    "pair_precision": "float32",
+    "msa": "empty on both chains",
+    "template": false,
+    "external_upload": false,
+    "chain_order": [
+      "binder_A",
+      "target_B"
+    ]
+  },
+  "screen": {
+    "all_metrics_required_finite": true,
+    "binder_plddt_min_0_to_100": 80.0,
+    "complex_iptm_min": 0.65,
+    "binder_self_aligned_ca_rmsd_max_angstrom": 2.0,
+    "target_aligned_binder_ca_rmsd_max_angstrom": 3.0,
+    "refold_target_ca_rmsd_to_input_max_angstrom": 2.0,
+    "interchain_heavy_atom_contact_cutoff_angstrom": 5.0,
+    "distinct_contacting_binder_residues_min": 8,
+    "distinct_contacting_target_residues_min": 8,
+    "distinct_contacting_residue_pairs_min": 20,
+    "interchain_minimum_heavy_atom_distance_min_angstrom": 1.5,
+    "sequence_shannon_entropy_min_bits": 2.5,
+    "maximum_single_amino_acid_fraction": 0.3,
+    "maximum_homopolymer_run": 4,
+    "both_boltz_seeds_must_pass": true,
+    "af2_diagnostic_only": [
+      "binder_to_target_pae_mean",
+      "target_to_binder_pae_mean"
+    ]
+  }
+}
