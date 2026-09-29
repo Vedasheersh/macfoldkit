@@ -40,18 +40,50 @@ site-packages it would shadow the runtime's own torch.
 
 With that, `import mosaic.models.boltz2` succeeds.
 
-## Remaining blocker: the checkpoint
+## It runs. Measured on CPU
 
-`load_boltz2` resolves `boltz2_conf.ckpt` from the boltz cache and calls
-`boltz_main.download_boltz2(cache)` if it is absent. It is absent. The cache holds
-`fastplms-ccd.pkl` (417 MB) and `mols`, so the chemistry data is already there, but the
-Boltz2 weights themselves are not — the refolds in this repository use the
-Synthyra/FastPLMs Boltz2 variant, which is a different artifact from the checkpoint this
-loader wants.
+A Mosaic design gradient through Boltz2 now executes. On CPU, 48-residue binder against
+76-residue ubiquitin, `sampling_steps=1`:
 
-## Expected cost, and why it matters
+| stage | seconds |
+|---|---|
+| model load, torch checkpoint through `joltz.from_torch` | 11.1 |
+| feature build | 0.51 |
+| **warm gradient step** | **8.73** |
 
-This is the part that should decide whether to pursue it.
+Loss -0.6201, gradient finite. AF2's CPU baseline for the same complex is 6.51 s per step,
+and AF2 gets 3.1x from the GPU, so if Boltz2 scales similarly a `sampling_steps=1` step
+would land near 2.8 s on MPS. The default is 25, so the scaling with sampling steps is what
+actually decides affordability and is being measured next.
+
+### The checkpoint was already here
+
+`boltz2_conf.ckpt` (2,286,561,469 bytes) was already in `work/boltz-cache/`, alongside
+`boltz2_aff.ckpt`, `mols/` and `mols.tar`. It was re-downloaded before that was checked, and
+the redundant copy has been deleted. The correct mechanism is the `MOSAIC_CACHE_DIR`
+environment variable that `mosaic/cache.py` reads:
+
+```
+export MOSAIC_CACHE_DIR=<workspace>/work/mosaic-cache   # containing boltz -> work/boltz-cache
+```
+
+Without it, `resolve_cache` points at `~/.cache/mosaic/boltz` and both the checkpoint and
+the 45,227-file CCD molecule directory would be downloaded again.
+
+### Two compatibility fixes were required
+
+1. **`torch.load` weights_only.** torch >= 2.6 defaults `weights_only=True`, and the
+   checkpoint carries an `omegaconf.DictConfig`, so lightning's loader refuses it.
+   Allowlisting the config classes via `add_safe_globals` did not suffice. The probe forces
+   `weights_only=False` for this one file — a scoped trust decision about an artifact
+   fetched from Boltz's own gateway with a verified length, not a general default.
+2. **antlr4 pin.** `omegaconf` requires `antlr4-python3-runtime==4.9.*`; installing with
+   `--no-deps` pulls a newer runtime and the grammar fails with
+   `Could not deserialize ATN with version 3 (expected 4)`.
+
+## Remaining cost question
+
+This is the part that decides whether to pursue it.
 
 | | AF2 design step | Boltz2 design step |
 |---|---|---|

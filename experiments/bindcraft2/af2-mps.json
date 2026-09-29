@@ -1,0 +1,94 @@
+{
+  "backend": "mps",
+  "jax": "0.11.2",
+  "device": "MPS:0",
+  "attention_backend": "stock",
+  "cuequivariance_available": false,
+  "model": "model_1_ptm",
+  "binder_length": 40,
+  "target_length": 0,
+  "num_recycle": 0,
+  "seconds_build_and_load_params": 0.21143237498472445,
+  "bfloat16": true,
+  "parameter_tensors": 314,
+  "parameter_count": 93237338,
+  "seconds_first_call_including_compile": 0.9770586670201737,
+  "seconds_second_call": 0.2573345410055481,
+  "repeat_bit_identical": true,
+  "metrics": {
+    "distogram": {
+      "shape": [
+        40,
+        40,
+        64
+      ],
+      "mean": -0.9976636471329402,
+      "min": -133.54595947265625,
+      "max": 180.74142456054688,
+      "finite": true
+    },
+    "experimentally_resolved_ca": {
+      "shape": [
+        40
+      ],
+      "mean": 0.8277959570288658,
+      "min": 0.4834294021129608,
+      "max": 0.9823850989341736,
+      "finite": true
+    },
+    "iptm": {
+      "shape": [],
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "finite": true
+    },
+    "iptm_per_residue": {
+      "shape": [
+        40
+      ],
+      "mean": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "finite": true
+    },
+    "pae": {
+      "shape": [
+        40,
+        40
+      ],
+      "mean": 15.4905017253384,
+      "min": 0.25,
+      "max": 27.837421417236328,
+      "finite": true
+    },
+    "plddt": {
+      "shape": [
+        40
+      ],
+      "mean": 0.5281365096569062,
+      "min": 0.3499617576599121,
+      "max": 0.6979224681854248,
+      "finite": true
+    },
+    "ptm": {
+      "shape": [],
+      "mean": 0.23790724575519562,
+      "min": 0.23790724575519562,
+      "max": 0.23790724575519562,
+      "finite": true
+    }
+  },
+  "chains": {
+    "binder": {
+      "residues": 40,
+      "resolved_atoms": 326,
+      "coordinate_absmax": 28.375,
+      "radius_of_gyration": 15.639842456376096,
+      "ca_ca_span_mean": 3.813724071780058,
+      "ca_ca_span_max": 4.0288765004294795,
+      "finite": true
+    }
+  },
+  "peak_rss_gib": 1.196990966796875
+}

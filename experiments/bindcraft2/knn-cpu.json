@@ -1,0 +1,54 @@
+{
+  "backend": "cpu",
+  "jax": "0.11.2",
+  "device": "cpu:0",
+  "checks": [
+    {
+      "label": "approx_min_k_indices",
+      "dtype": "int32",
+      "integer_output": true,
+      "exact_order_match_fraction": 1.0,
+      "neighbour_set_overlap_fraction": 1.0,
+      "k": 48,
+      "residues": 96
+    },
+    {
+      "label": "grad_through_indices_only",
+      "grad_norm": 0.0,
+      "all_exactly_zero": true,
+      "finite": true
+    },
+    {
+      "label": "grad_through_protein_features",
+      "value": 582387.75,
+      "seconds": 0.003231082984711975,
+      "grad_names": [
+        "protein_features/~/edge_embedding/w",
+        "protein_features/~/norm_edges/offset",
+        "protein_features/~/norm_edges/scale",
+        "protein_features/~/positional_encodings/~/embedding_linear/b",
+        "protein_features/~/positional_encodings/~/embedding_linear/w",
+        "X"
+      ],
+      "grad_norms": [
+        13859.565470376581,
+        31768.46876507267,
+        109912.2390463654,
+        14643.92158452264,
+        14047.318636241338,
+        108.51201468332096
+      ],
+      "grad_zero_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.08333333333333333
+      ],
+      "x_zero_rows": 8,
+      "x_zero_rows_are_padding": true,
+      "finite": true
+    }
+  ]
+}
