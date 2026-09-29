@@ -1,0 +1,4 @@
+{
+  "backend": "jax-mps",
+  "jit_seconds": 0.0014146670000627637
+}

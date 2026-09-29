@@ -1,0 +1,20 @@
+{
+  "binder_length": 48,
+  "target_length": 76,
+  "total_length": 124,
+  "forward": {
+    "seconds": 1.7183095830259845,
+    "flops": 56375152640.0,
+    "bytes_accessed": 4747914752.0,
+    "gflops_achieved": 32.80849574307908,
+    "arithmetic_intensity": 11.873665721620775
+  },
+  "value_and_grad": {
+    "seconds": 6.32404866698198,
+    "flops": 167685914624.0,
+    "bytes_accessed": 21548947456.0,
+    "gflops_achieved": 26.515595222960957,
+    "arithmetic_intensity": 7.781629008395499
+  },
+  "backward_multiplier": 3.6803895697567945
+}

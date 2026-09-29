@@ -1,8 +1,13 @@
 # Can the design workflow go faster on an M5 Pro?
 
-Short answer: **not materially, and not with MLX.** Six independent levers were measured;
-the only one that helped destroyed the gradient. The configuration already shipped is at a
-local optimum for this machine.
+**Yes, substantially — but not through configuration.** The design gradient runs at **3.7%
+of this machine's bandwidth roofline**, about 27x off. Eight configuration- and
+backend-level levers were measured and none helped. The remaining headroom is in operator
+fusion of the real model's op graph, and at least **1.67x of it is demonstrably recoverable**.
+
+An earlier revision of this file concluded "not materially, and not with MLX". That was
+wrong, and the correction is recorded below under *MLX versus jax-mps*: the no-win result
+came from benchmarking an **isolated** operation, which is not where the difference lives.
 
 Measurements, not estimates. Target is the Mosaic AF2 design gradient, the heaviest GPU
 consumer here: 2.08 s per step at 124 residues, 9.25 s at 231.
@@ -36,19 +41,61 @@ Square FP32 matmul, `tri_roofline.py`:
 large-matmul throughput on the table. The N=1024 spread is launch overhead that amortizes
 away.
 
-## MLX versus jax-mps on the operation that matters
+## MLX versus jax-mps: isolated ops tie, composed blocks do not
 
-Triangle multiplication, `einsum('ikc,jkc->ijc')`, is a batched matmul
-`A(128,N,N) @ B(128,N,N)^T` costing `2*c*N^3` FLOPs — the characteristic Evoformer op.
+**Isolated triangle multiplication**, `A(128,N,N) @ B(128,N,N)^T`:
 
 | N | jax-mps | MLX | torch-mps | MLX vs jax-mps | % of peak |
 |---|---|---|---|---|---|
-| 124 | 1926 | 1755 | 1906 | **0.91x** | 26% |
-| 231 | 4072 | 4012 | 3568 | **0.99x** | 55% |
+| 124 | 1926 | 1755 | 1906 | 0.91x | 26% |
+| 231 | 4072 | 4012 | 3568 | 0.99x | 55% |
 
-**MLX is not faster — it is slightly slower.** An MLX rewrite of this op would gain
-nothing. The 26–55% of peak is a shape and occupancy limit: 128 batched small matmuls do
-not saturate 20 cores. It is identical across frameworks, so it is not a backend defect.
+All three tie, because all three dispatch the same underlying matmul. Concluding from this
+that "MLX offers no win" was a mistake — a single op is not where a compiler differs.
+
+**A composed Evoformer-shaped block** — layer norm, gate, two matmuls, the triangle einsum,
+residual — at N=124, C=128:
+
+| implementation | time | vs jax-mps |
+|---|---|---|
+| jax-mps, jitted | 1415 us | 1.00x |
+| MLX, eager | 935 us | **1.51x** |
+| MLX, `mx.compile` | **849 us** | **1.67x** |
+
+**MLX compiled is 1.67x faster than jax-mps jitted, and MLX eager beats jax-mps jitted.**
+That is real, recoverable headroom, and it only appears once operations are composed.
+
+A trivially fusable elementwise chain (layer norm, sigmoid gate, residual) shows no gap —
+jax-mps 421 us against `mx.compile` 409 us, within 3% — so jax-mps does fuse simple chains
+competently. The gap opens at the boundaries a realistic block introduces: reductions,
+transposes, batched matmuls and einsums.
+
+## How far from the limit, precisely
+
+XLA cost analysis of the same computation (`cost_analysis.py`, run on the CPU backend since
+jax-mps does not expose it), 124-residue complex, one `value_and_grad`:
+
+| quantity | value |
+|---|---|
+| FLOPs | 167.7 GFLOP |
+| bytes accessed | 21.5 GB |
+| arithmetic intensity | 7.78 FLOP/byte |
+
+This machine's measured rooflines: **7.4 TFLOPS** compute, **285 GB/s** bandwidth (both
+backends agree; see `bandwidth-*.json`). The ridge point is 7404/285 = 26 FLOP/byte, and at
+7.78 FLOP/byte this workload is firmly **bandwidth-bound**.
+
+| bound | time |
+|---|---|
+| compute-bound: 167.7 GFLOP / 7.4 TFLOPS | 0.023 s |
+| **bandwidth-bound: 21.5 GB / 285 GB/s** | **0.076 s** |
+| **measured** | **2.068 s** |
+
+**The design gradient achieves 3.7% of its roofline.** Caveats worth stating: cost analysis
+is approximate, and the byte count comes from XLA's fused HLO, so it describes an idealised
+fused execution rather than what jax-mps actually issues — the real traffic is higher and
+the true gap correspondingly smaller. But it is not a factor of 27 smaller, and no
+interpretation of these numbers puts this workload near its limit.
 
 ## Where the time actually goes
 

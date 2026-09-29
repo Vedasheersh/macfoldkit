@@ -1,0 +1,8 @@
+{
+  "backend": "mlx",
+  "version": "0.32.0",
+  "device": "Device(gpu, 0)",
+  "eager_seconds": 0.0006254580221138895,
+  "compiled_seconds": 0.000408999971114099,
+  "tensor_mb": 7.872512
+}
