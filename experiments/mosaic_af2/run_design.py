@@ -34,6 +34,7 @@ from mosaic.proteinmpnn.mpnn import ProteinMPNN
 from mosaic.structure_prediction import TargetChain
 
 from metal_losses import WithinBinderContact, BinderTargetContact
+import fast_opm
 
 
 class SingleAF2(AlphaFold2):
@@ -381,6 +382,9 @@ def main():
     ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
                     help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
                          'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--fast-opm', choices=['on', 'off'], default='off',
+                    help='Reassociate OuterProductMean for a shallow MSA. Same mathematics,\n'
+                         'different arithmetic, so the CPU/MPS gradient gate must be re-run.')
     ap.add_argument('--bfloat16', choices=['on', 'off'], default='off',
                     help='Run the Evoformer in bfloat16. Halves activation traffic on a\n'
                          'bandwidth-bound machine but changes numerics; off is the\n'
@@ -424,6 +428,8 @@ def main():
     print('DEVICES', devices, flush=True)
     np.random.seed(args.seed)
     apply_remat_policy(args.remat_policy)
+    if args.fast_opm == 'on':
+        fast_opm.enable()
     model = SingleAF2(args.weights, use_remat=args.remat == 'on',
                       bfloat16=args.bfloat16 == 'on')
     chains = [TargetChain(target_sequence, use_msa=False,
@@ -492,7 +498,8 @@ def main():
         compile_and_first_gradient_seconds=compile_first_s, warm_gradient_seconds=warm_s,
         # Reported at probe time so a target's feasibility on this machine is known
         # before committing to a full optimization.
-        remat=args.remat, remat_policy=args.remat_policy, bfloat16=args.bfloat16, probe_device_memory_stats=devices[0].memory_stats(),
+        remat=args.remat, remat_policy=args.remat_policy, bfloat16=args.bfloat16,
+        fast_opm=args.fast_opm, probe_device_memory_stats=devices[0].memory_stats(),
         probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'
