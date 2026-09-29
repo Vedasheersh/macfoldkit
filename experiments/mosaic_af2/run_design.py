@@ -37,7 +37,7 @@ from metal_losses import WithinBinderContact, BinderTargetContact
 
 
 class SingleAF2(AlphaFold2):
-    def __init__(self, weights):
+    def __init__(self, weights, use_remat=True):
         name = 'model_1_multimer_v3'
         params = data.get_model_haiku_params(name, str(weights))
         self.stacked_parameters = jax.tree.map(lambda p: jnp.asarray(p)[None], params)
@@ -50,7 +50,10 @@ class SingleAF2(AlphaFold2):
         cfg.model.global_config.subbatch_size = None
         cfg.model.global_config.eval_dropout = False
         cfg.model.global_config.deterministic = True
-        cfg.model.global_config.use_remat = True
+        # Gradient checkpointing trades recomputation for activation memory. On a
+        # 24 GiB machine a 124-231 residue complex peaks around 2.7-5.4 GB, so the
+        # trade can be worth reversing; --remat off measures it.
+        cfg.model.global_config.use_remat = use_remat
         cfg.model.global_config.bfloat16 = False
         cfg.model.num_extra_msa = 1
         cfg.model.resample_msa_in_recycling = False
@@ -348,6 +351,9 @@ def main():
     ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
                     help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
                          'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--remat', choices=['on', 'off'], default='on',
+                    help='Gradient checkpointing in the Evoformer. on (default) matches every\n'
+                         'published run; off uses more activation memory for less recomputation.')
     ap.add_argument('--smoke', type=int, default=0, metavar='N',
                     help='Path-only smoke test: run N steps per bindcraft stage. Refused with '
                          '--protocol so the frozen schedule cannot be shortened by accident.')
@@ -379,7 +385,7 @@ def main():
         raise RuntimeError(f'Unexpected devices: {devices}')
     print('DEVICES', devices, flush=True)
     np.random.seed(args.seed)
-    model = SingleAF2(args.weights)
+    model = SingleAF2(args.weights, use_remat=args.remat == 'on')
     chains = [TargetChain(target_sequence, use_msa=False,
                          template_chain=target_structure[0][0])] if target else []
     features, _ = model.binder_features(args.length, chains=chains)
@@ -446,7 +452,7 @@ def main():
         compile_and_first_gradient_seconds=compile_first_s, warm_gradient_seconds=warm_s,
         # Reported at probe time so a target's feasibility on this machine is known
         # before committing to a full optimization.
-        probe_device_memory_stats=devices[0].memory_stats(),
+        remat=args.remat, probe_device_memory_stats=devices[0].memory_stats(),
         probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'
