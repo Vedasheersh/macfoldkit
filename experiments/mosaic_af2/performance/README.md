@@ -1,13 +1,15 @@
 # Can the design workflow go faster on an M5 Pro?
 
-**Yes, substantially — but not through configuration.** The design gradient runs at **3.7%
-of this machine's bandwidth roofline**, about 27x off. Eight configuration- and
-backend-level levers were measured and none helped. The remaining headroom is in operator
-fusion of the real model's op graph, and at least **1.67x of it is demonstrably recoverable**.
+**Not by switching backends, and not by configuration.** Ten levers were measured; none
+helped. On realistic composed blocks jax-mps and MLX are **within 3% of each other** when
+measurements are replicated. The design gradient sits far from an idealised roofline, but
+that gap is not reachable through any backend or flag tested here.
 
-An earlier revision of this file concluded "not materially, and not with MLX". That was
-wrong, and the correction is recorded below under *MLX versus jax-mps*: the no-win result
-came from benchmarking an **isolated** operation, which is not where the difference lives.
+**This file has now been wrong twice on the same question, in opposite directions.** Both
+errors are documented below under *MLX versus jax-mps*, because the way they happened is
+more useful than the numbers: the first generalised an isolated-operation tie to all code,
+the second built a "1.67x recoverable" claim on a single unreplicated measurement that had
+caught jax-mps in a bad state. Replication, not reasoning, settled it.
 
 Measurements, not estimates. Target is the Mosaic AF2 design gradient, the heaviest GPU
 consumer here: 2.08 s per step at 124 residues, 9.25 s at 231.
@@ -41,34 +43,54 @@ Square FP32 matmul, `tri_roofline.py`:
 large-matmul throughput on the table. The N=1024 spread is launch overhead that amortizes
 away.
 
-## MLX versus jax-mps: isolated ops tie, composed blocks do not
+## MLX versus jax-mps: they tie on real work. Two retracted claims
 
-**Isolated triangle multiplication**, `A(128,N,N) @ B(128,N,N)^T`:
+**Replicated result, 4 independent processes per framework**, same Evoformer-shaped block,
+bit-identical inputs and bit-identical output checksums:
 
-| N | jax-mps | MLX | torch-mps | MLX vs jax-mps | % of peak |
+| | run 1 | run 2 | run 3 | run 4 | spread |
 |---|---|---|---|---|---|
-| 124 | 1926 | 1755 | 1906 | 0.91x | 26% |
-| 231 | 4072 | 4012 | 3568 | 0.99x | 55% |
+| jax-mps, min | 868 | 816 | 818 | 854 us | 6% |
+| MLX compiled, min | 799 | 792 | 808 | 797 us | 2% |
 
-All three tie, because all three dispatch the same underlying matmul. Concluding from this
-that "MLX offers no win" was a mistake — a single op is not where a compiler differs.
+**Best-of-4 ratio 1.03x — a tie.** jax-mps has visibly worse run-to-run variance (its
+*median* ranged 964-1431 us against MLX's stable 869-911) but the same best case.
 
-**A composed Evoformer-shaped block** — layer norm, gate, two matmuls, the triangle einsum,
-residual — at N=124, C=128:
+### Where MLX genuinely is faster, and why it does not matter
 
-| implementation | time | vs jax-mps |
-|---|---|---|
-| jax-mps, jitted | 1415 us | 1.00x |
-| MLX, eager | 935 us | **1.51x** |
-| MLX, `mx.compile` | **849 us** | **1.67x** |
+Cumulative decomposition of that block, all checksums matching:
 
-**MLX compiled is 1.67x faster than jax-mps jitted, and MLX eager beats jax-mps jitted.**
-That is real, recoverable headroom, and it only appears once operations are composed.
+| stage | jax-mps | MLX | MLX gain |
+|---|---|---|---|
+| layer norm alone | 759 us | 318 us | **2.39x** |
+| + one matmul | 565 | 400 | 1.41x |
+| + two matmuls | 821 | 518 | 1.58x |
+| + gating | 767 | 521 | 1.47x |
+| + triangle einsum | 746 | 748 | **1.00x** |
+| + residual (full block) | 832 | 836 | **1.00x** |
 
-A trivially fusable elementwise chain (layer norm, sigmoid gate, residual) shows no gap —
-jax-mps 421 us against `mx.compile` 409 us, within 3% — so jax-mps does fuse simple chains
-competently. The gap opens at the boundaries a realistic block introduces: reductions,
-transposes, batched matmuls and einsums.
+MLX is genuinely 1.4-2.4x faster on **isolated memory-bound elementwise and reduction
+work**. That advantage disappears completely the moment a compute-heavy einsum is present —
+and every real Evoformer block contains several. Note also that jax-mps is *faster* at
+"layer norm + one matmul" (565 us) than at layer norm alone (759 us): it materialises the
+result when it is the output and fuses it into the matmul when it is not, so isolated-op
+benchmarks systematically misrepresent it.
+
+A six-component sweep at real AF2 shapes (`component-*.json`) agrees: forward and backward,
+jax-mps and MLX tie on triangle multiplication, triangle attention, transition and the
+composed block. The only large gaps are isolated layer norm (MLX 2.8x on forward) and
+isolated layer-norm backward (jax-mps 1.9x).
+
+### The two retractions
+
+1. *"MLX shows no win"* — drawn from an isolated triangle multiplication, where all three
+   backends tie because all three dispatch the same matmul. Too narrow to support the claim.
+2. *"1.67x demonstrably recoverable"* — drawn from one measurement of one block. Replicating
+   it four times gives 1.03x. The 1208 us jax figure behind that claim was an outlier;
+   the same code measures 816-868 us across four clean runs.
+
+The lesson worth keeping: on this machine a single timing is not evidence. jax-mps's
+run-to-run spread is large enough to manufacture a 1.5x "finding" from noise.
 
 ## How far from the limit, precisely
 

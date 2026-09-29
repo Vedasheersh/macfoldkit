@@ -1,0 +1,7 @@
+{
+  "framework": "mlx",
+  "min_seconds": 0.000808292010333389,
+  "median_seconds": 0.0008821044903015718,
+  "eager_min_seconds": 0.0008724169747438282,
+  "checksum": 176409.19399672665
+}
