@@ -17,57 +17,133 @@ filter imports, public ubiquitin structural scoring and rigid alignment. The
 audit did not run any BindCraft2 model on MPS or complete a design campaign.
 Full campaign imports also need its own complete dependency environment.
 
-## Update, September 29 2026: first MPS execution
+## Update, September 29 2026: MPS execution
 
-The audit above was CPU-only. BindCraft2's attention primitive has now been run on the
-GPU, forward and backward, using the existing jax-mps 0.11.2 runtime. `experiments/
-bindcraft2/mps_probe.py` reproduces it; BindCraft2 is read from a separate local checkout
-and is still neither vendored nor redistributed.
+The audit above was CPU-only. BindCraft2 primitives, a full AF2 forward pass and an AF2
+backward pass have now been run on the GPU. Probes and JSON results are in
+`experiments/bindcraft2/`; `results-summary.json` consolidates them. BindCraft2 is read from
+a separate local checkout, which was left untouched (still at `e6d30f6`, clean working
+tree). No BindCraft2 source is vendored here.
 
-| | CPU | MPS | agreement |
+The repository's 0.5% relative gate is used throughout.
+
+### Attention: PASS
+
+`accel.attend`, stock and chunked, forward and backward. CPU vs MPS forward values
+bit-identical; gradient norms for all five inputs agree to 2e-08..7e-08; zero-gradient
+fractions identical. Backward 5.8x (stock) and 6.0x (chunked) faster than CPU.
+
+### Non-fused triangle multiplication: PASS
+
+The CUDA kernel is reachable only through the guard at `modules.py:1050`
+(`gc.get('use_cueq', False) and accel.cuequivariance_available()`); `use_cueq` is not a key
+in the stock global config, so the ordinary-JAX fallback runs unconditionally. Both JAX
+paths (`_fused_triangle_multiplication`'s fallback and `_triangle_multiplication`) were run
+across outgoing/incoming and full/padded masks, forward and backward.
+
+| size | worst relative | zero-gradient rows | MPS backward |
 |---|---|---|---|
-| `attend` stock, forward | 9162.173828 | 9162.173828 | bit-identical |
-| `attend` chunked, forward | 9162.173828 | 9162.173828 | bit-identical |
-| gradient norms, all five inputs | — | — | 2e-08 to 7e-08 relative |
-| zero-gradient fractions | all 0.0 | all 0.0 | identical |
-| backward wall time, stock | 0.0519 s | 0.0089 s | **5.8x faster** |
-| backward wall time, chunked | 0.1289 s | 0.0213 s | **6.0x faster** |
+| N=48, C=32 | 5.83e-07 | none, identical | 0.47x–1.73x (dispatch-bound) |
+| N=192, C=128 (evoformer scale) | 8.06e-07 | none, identical | **2.16x–6.82x** |
 
-Three things this establishes. The dependency gap is small: jax-mps and dm-haiku are
-already installed, and only `optax` and `biotite` had to be added. `supported_attention_
-backend('auto')` correctly selects `stock` on this machine and `cuequivariance_available()`
-is false, so the CUDA path declines cleanly rather than failing. And the descending-sort
-backward defect that required a custom VJP in the Mosaic experiment does **not** affect
-this path: zero-gradient fractions match CPU exactly.
+No scatter/sort backward signature anywhere.
 
-`fused_triangle_multiplicative_update` raises `ModuleNotFoundError: cuequivariance_jax`,
-which is correct — it is the CUDA-only fused variant, and BindCraft2 carries an ordinary
-JAX triangle multiplication to fall back to. That fallback has not been exercised yet.
+### Full AF2 forward: PASS in float32, FAILS at BindCraft2's bfloat16 default
 
-Source inspection also revises one expected hazard downward: the contact ranking at
-`bindcraft/loss.py:412` is wrapped in `jax.lax.stop_gradient`, so no gradient flows through
-that `argsort`. The remaining sort-shaped exposure is `top_k=30` in the ProteinMPNN k-nearest
--neighbour graph (`bindcraft/mpnn/modules.py`), and only if gradients reach it.
+Two things the audit expected to be blockers were not. **The ColabFold weights work as-is**:
+`get_model_haiku_params` probes `<data_dir>/params/params_<model>.npz` and
+`work/colabfold-weights/params/` already holds every `params_model_{1..5}{,_ptm,_multimer_v3}.npz`;
+93,237,338 parameters load in 0.22 s with no conversion. **No CUDA bypass was needed**:
+constructing `bindcraft.af2.AlphaFoldDesignModel` directly never imports `cli.py`,
+`design_workers.py` or `selfcheck.py`.
 
-This is one primitive, not the model. Nothing below is retracted.
+| comparison | model_1_ptm | multimer_v3 | gate |
+|---|---|---|---|
+| CPU fp32 vs MPS fp32 | 5.21e-04 | 4.68e-04 | **PASS** |
+| CPU bf16 vs MPS bf16 (the default) | 3.43e-01 | 1.44e+00 | FAIL |
+| CPU bf16 vs CPU fp32 (no backend change) | 3.97e-01 | 1.38e+00 | FAIL |
+
+The third row is the important one: **the bfloat16 failure is not an MPS defect.** Changing
+only precision on a single backend moves the answer as much as changing the backend does.
+AF2 is bf16-chaotic on this input (random sequence, no MSA, pLDDT ~0.31) and the structure
+module amplifies it. The float32 "worst" is entirely the `astype(jnp.float16)` on returned
+coordinates at `af2.py:345` — one fp16 ULP, 0.0156 A. The metrics agree far tighter: pLDDT
+2.4e-05, PAE 6.5e-07, pTM 1.9e-07, distogram 5.9e-07.
+
+**Actionable:** `_alphafold_runner` (`af2.py:252`) hardcodes `bfloat16 = True`. On MPS that is
+*slower* than float32 (0.633 s vs 0.573 s for a 100-residue multimer) while on CPU it is
+faster (1.507 s vs 2.155 s). A Mac adapter should turn it off and gain both speed and
+numerical agreement.
+
+### AF2 backward: runs, FAILS the gate. This is the blocker
+
+Gradient w.r.t. the design sequence through BindCraft2's own chain, scalar = -mean pLDDT,
+model_1_ptm, L=40, float32. It runs, and 3.43x faster than CPU (1.884 s -> 0.549 s), peak
+RSS 2.60/3.00 GiB.
+
+| quantity | value | verdict |
+|---|---|---|
+| loss | 4.0e-07 relative | agrees |
+| gradient norm | **4.75e-03** | **FAILS 0.5%** |
+| worst element | **3.70e-02** | **FAILS** |
+| mean element | 6.6e-04 | — |
+| sign agreement, real residues | 100% | structurally sound |
+| cosine similarity | 0.999856 | structurally sound |
+| zero rows | 24 on both = exactly the padding | no dropped gradients |
+
+The forward agrees to 2.4e-05 and the backward to only 3.7e-02 on the identical
+configuration, so the discrepancy accumulates in the backward pass. It is a
+magnitude/precision problem, not a missing-gradient one, and is the same order as the ~3%
+CPU/MPS gradient discrepancy this document already records for the Mosaic experiment.
+**Sequence optimization iterates this gradient, so this is what blocks a campaign.**
+
+### ProteinMPNN k-nearest-neighbour graph: not a hazard
+
+An earlier revision of this document stated that "the remaining sort-shaped exposure is
+`top_k=30` in the ProteinMPNN k-nearest-neighbour graph". That was wrong on three counts and
+is retracted:
+
+1. The primitive is `jax.lax.approx_min_k(D_masked, k, reduction_dimension=-1)[1]`
+   (`mpnn/modules.py:200`), not `top_k` and not `argsort`. `top_k` is only a keyword name.
+   The `[1]` keeps the int32 indices and discards the values, so the selection has no
+   tangent space at all.
+2. k is **48**, not 30. 30 is only `ProteinFeatures.__init__`'s default; `ProteinMPNN.__init__`
+   overrides it from the checkpoint's `num_edges`, and the shipped `v_48_020.npz` gives 48.
+3. **ProteinMPNN is never inside a gradient.** The only two gradient sites in `bindcraft/`
+   are `af2.py:378` and `protein.py:146`; neither touches MPNN.
+
+Measured: gradient through the indices is exactly zero on both backends, and jax-mps returns
+the *exact* nearest neighbours — index arrays bit-identical to CPU and matching a brute-force
+argsort reference at 1.0 on both. So the approximate primitive is not a forward-correctness
+hazard on MPS either. A counterfactual gradient through `ProteinFeatures` agrees to 5.66e-06.
+
+`loss.py:412`'s `jax.lax.stop_gradient(jnp.argsort(...))` was re-verified. There is no
+sort-shaped gradient exposure left in BindCraft2.
+
+### What is still not established
+
+- **No AF2 gradient meets the 0.5% gate on MPS.** Only the forward does, and only in float32.
+- One loss scalar (mean pLDDT) was differentiated. BindCraft2's composite loss registry, its
+  structure and contact terms and the full `DesignLoss` plumbing were not exercised.
+- Everything ran at `num_recycle=0`. Recycling is `stop_gradient`-wrapped per iteration
+  (`af2.py:140`) but was not measured.
+- All inputs were random sequences with no MSA and no real template, a low-confidence and
+  precision-sensitive regime. The bf16 numbers are an upper bound on the discrepancy, not a
+  typical one.
+- Sizes were 40-100 residues padded to 64/128. Nothing at campaign scale; memory headroom
+  there is unknown (peak RSS here 1.2-3.0 GiB of 24).
+- No trajectory, no optimization loop, no MPNN redesign stage, no filters, no campaign.
+  ProteinMPNN's forward pass was never run with real weights, only its featuriser.
+- `fused_triangle_multiplicative_update` (cuEquivariance) remains unavailable and untested.
 
 Remaining work:
 
 - Replace the CUDA-oriented installer with an isolated Mac environment.
-- Bypass NVIDIA-only device discovery and multiprocessing; use one MPS worker.
-  CUDA coupling is confined to five files: `design_workers.py`, `selfcheck.py`, `cli.py`,
-  `af/accel.py` and `af/alphafold/model/modules.py`.
-- Exercise the non-fused triangle multiplication fallback on MPS.
-- Check whether gradients reach the ProteinMPNN `top_k` graph, and if so gate it.
-- Compare full AF2 confidence/structure losses and raw sequence gradients against
-  CPU, including ProteinMPNN's sorting/sampling operations.
-- Run one bounded trajectory, sequence redesign and unchanged structural filters;
-  measure memory and iteration time before attempting a campaign.
-
-A single successful ColabFold prediction does not establish full design support:
-sequence optimization executes repeated forward/backward passes. Mosaic's own
-full-gradient experiment exposed a single-iteration scan slowdown and a roughly
-3% CPU/MPS gradient discrepancy, so those paths deserve explicit testing here.
+- Bypass NVIDIA-only device discovery and multiprocessing; use one MPS worker. CUDA coupling
+  is confined to five files: `design_workers.py`, `selfcheck.py`, `cli.py`, `af/accel.py`,
+  `af/alphafold/model/modules.py`.
+- **Resolve the backward-pass discrepancy**, which is the actual blocker.
+- Turn off the hardcoded `bfloat16 = True` for Mac.
 
 The upstream [license](https://github.com/PacesaLab/BindCraft2/blob/e6d30f6ea2e5bbc2f62ae7fa722f183da6c6c29f/LICENSE)
 is named **BindCraft2 Source-Available License (Hosting-Restricted)** and states
