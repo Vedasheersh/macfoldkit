@@ -38,7 +38,7 @@ import fast_opm
 
 
 class SingleAF2(AlphaFold2):
-    def __init__(self, weights, use_remat=True, bfloat16=False):
+    def __init__(self, weights, use_remat=True, bfloat16=False, extra_msa_blocks=None):
         name = 'model_1_multimer_v3'
         params = data.get_model_haiku_params(name, str(weights))
         self.stacked_parameters = jax.tree.map(lambda p: jnp.asarray(p)[None], params)
@@ -60,6 +60,10 @@ class SingleAF2(AlphaFold2):
         # diagnosis implies. It changes numerics; the CPU/MPS gate must be re-run.
         cfg.model.global_config.bfloat16 = bfloat16
         cfg.model.num_extra_msa = 1
+        if extra_msa_blocks is not None:
+            # The extra-MSA stack runs pair operations too, so shortening it changes
+            # the model, not just the cost. Measured, not assumed.
+            cfg.model.embeddings_and_evoformer.extra_msa_stack_num_block = extra_msa_blocks
         cfg.model.resample_msa_in_recycling = False
 
         def forward(features, previous_rep, use_dropout=False):
@@ -382,6 +386,9 @@ def main():
     ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
                     help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
                          'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--extra-msa-blocks', type=int, default=None, metavar='N',
+                    help='Override extra_msa_stack_num_block (default 4). Changes the model,\n'
+                         'so results need re-screening, not just re-timing.')
     ap.add_argument('--fast-opm', choices=['on', 'off'], default='off',
                     help='Reassociate OuterProductMean for a shallow MSA. Same mathematics,\n'
                          'different arithmetic, so the CPU/MPS gradient gate must be re-run.')
@@ -431,7 +438,8 @@ def main():
     if args.fast_opm == 'on':
         fast_opm.enable()
     model = SingleAF2(args.weights, use_remat=args.remat == 'on',
-                      bfloat16=args.bfloat16 == 'on')
+                      bfloat16=args.bfloat16 == 'on',
+                      extra_msa_blocks=args.extra_msa_blocks)
     chains = [TargetChain(target_sequence, use_msa=False,
                          template_chain=target_structure[0][0])] if target else []
     features, _ = model.binder_features(args.length, chains=chains)
@@ -499,7 +507,7 @@ def main():
         # Reported at probe time so a target's feasibility on this machine is known
         # before committing to a full optimization.
         remat=args.remat, remat_policy=args.remat_policy, bfloat16=args.bfloat16,
-        fast_opm=args.fast_opm, probe_device_memory_stats=devices[0].memory_stats(),
+        fast_opm=args.fast_opm, extra_msa_blocks=args.extra_msa_blocks, probe_device_memory_stats=devices[0].memory_stats(),
         probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'

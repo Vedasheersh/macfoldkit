@@ -141,79 +141,34 @@ This is also the only reading consistent with the rest of this document. Ten ind
 levers failing to help is exactly what a workload at ~75% of its roofline looks like, and is
 very hard to explain at 3.7%. The internal contradiction should have been the tell.
 
-### What still has headroom
+### What still has headroom: one lever works, one does not
 
-Being near the bandwidth roofline bounds what *scheduling* can win, not what *doing less
-work* can win. Two concrete reductions were identified and are not yet tested:
+**OuterProductMean contraction order — works, 1.13-1.15x, but not a drop-in.**
+AF2 contracts the MSA-sequence axis first, which is right for a deep MSA and wrong at the
+`max_msa_clusters = 1` this experiment uses: contracting a length-1 axis gains nothing while
+materialising a [N_res, c, c, N_res] intermediate (63 MB at N_res=124, c=32). Folding
+`output_w` into `right_act` first is the same mathematics. In isolation, 1.544 ms -> 0.197
+ms (7.85x), agreeing to 5.9e-07 relative L2. End to end, 2.070 -> 1.828 s per gradient step,
+and 263.4 -> 230.0 s over a full 125-step design. The gradient still passes the CPU/MPS gate
+at 0.0319% against 0.5%.
 
-- **OuterProductMean contraction order** (modules.py compute_chunk). At the single-sequence
-  MSA depth this experiment uses, the contraction is performed in an order roughly 13-14x
-  more expensive than necessary; the term is about 16% of model FLOPs.
-- **The 4-block extra-MSA stack** runs full-width pair operations on an all-zero, fully
-  masked MSA -- about 7.4% of model FLOPs for no information.
+The catch: float32 reassociation shifts the gradient by about 0.03% per step, and over 125
+steps of a non-convex optimisation that compounds into a completely different trajectory —
+the same protocol and seed produced a sequence with **12.5% identity** to the baseline, which
+is background. So it is a genuine speedup that is **not** reproducible against the published
+runs. Whether the designs are better or worse cannot be judged from the one run here
+(objective 6.846 against 6.383, pLDDT 58.45 against 60.03), because the v3 campaign showed
+seed-to-seed spread of roughly 30 pLDDT points — far larger than this difference. It is off
+by default and would need its own protocol version and a multi-seed comparison.
 
-Both change the arithmetic, so both need the CPU/MPS gradient gate re-run, and the second
-needs the design output re-screened rather than only re-timed.
-
-## Where the time actually goes
-
-| component | seconds | share |
-|---|---|---|
-| forward pass | 0.483 | — |
-| full value_and_grad | 1.994 | 100% |
-| backward multiplier | **4.13x** | signature of full recomputation |
-| MPNN inverse-folding term | 0.072 | 3.4% |
-| all triangle multiplications | ~0.072 | ~3.5% |
-
-**Correction.** This section previously said "nothing dominates" and put triangle
-multiplication at 3.5% of the step, extrapolated from an isolated-op timing multiplied by a
-hand-counted call count. That was wrong by roughly 9x. By FLOPs, four pair operations are
-about 97% of the trunk, and the trunk is about 91% of the model: triangle multiplication
-~29%, triangle attention ~29%, OuterProductMean's output projection ~16%, pair transition
-~16%. The MPNN term really is 3.4%, measured by ablation rather than extrapolation.
-
-The 4.13x backward multiplier is full gradient checkpointing recomputing the whole forward,
-which suggested spending idle memory to avoid it. That trade is **inverted on unified
-memory**: keeping matmul outputs took peak memory from 2.66 GB to 20–26 GB and made things
-0.78x and 0.04x, because activations compete for the same bandwidth the arithmetic needs.
-Recomputing is cheaper than storing here. Both policies produced **bit-identical
-gradients**, confirming the measurements are pure performance.
-
-But the workload is not purely bandwidth-bound either: halving activation bytes with
-bfloat16 bought only 11%, and barely moved peak memory (2.66 -> 2.61 GB). No single
-resource is the limit, which is why no single lever helps.
-
-## The structural number
-
-| | seconds per gradient step, 124 residues |
-|---|---|
-| CPU (jax cpu) | 6.51 |
-| MPS (jax-mps) | 2.08 |
-| **GPU speedup** | **3.1x** |
-
-A 3.1x GPU speedup, at roughly 30% of matmul peak, is the honest characterization: this workload
-suits the GPU poorly. It is not idle — batching and async dispatch both fail to help, so it
-is genuinely busy — it is simply executing many low-intensity operations. That is a
-property of the Evoformer's op mix under reverse-mode AD, not of jax-mps.
-
-## Where optimization does pay: inference, not design
-
-This project's earlier Metal/MLX work won real speedups on **inference**: a native Boltz
-Metal attention kernel took 427-residue attention from 4.728 ms to 0.951 ms and the full
-forward from 20.61 s to 18.93 s, and a rebuilt jax-mps runtime took 427-residue ColabFold
-from 88.7 s to 54.8 s. Both remain opt-in because of accuracy deltas.
-
-Those wins rest on fused low-precision attention. Design cannot use them: it needs float32
-gradients, and bfloat16 here costs 23% gradient error. This is the distinction to carry
-forward — **fused Metal kernels and reduced precision pay off for folding, and structurally
-cannot pay off for design.**
-
-## Recommendation
-
-Do not invest in MLX kernels for the design path. The measured ceiling is the op mix, and
-every backend is already at it. If design throughput matters, the effective lever is fewer
-or cheaper gradient steps — a shorter schedule, a cheaper objective, or a smaller binder —
-not faster kernels.
+**The extra-MSA stack — not the free win it looked like.** The audit proposed it as ~7.4% of
+FLOPs spent on an all-zero, fully masked MSA. But those 4 blocks run triangle operations on
+the **pair** track as well, so shortening the stack changes the model rather than skipping
+dead work, and results would need re-screening rather than re-timing. It also cannot simply
+be set shorter: `layer_stack` asserts the checkpoint's parameter stack size
+("Attempting to use a parameter stack of size 4 for a LayerStack of size 2"), so the loaded
+parameters would have to be sliced too. Poor trade against a 1.13x that is mathematically
+exact.
 
 ## Reproduce
 
