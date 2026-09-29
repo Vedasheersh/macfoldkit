@@ -37,7 +37,7 @@ from metal_losses import WithinBinderContact, BinderTargetContact
 
 
 class SingleAF2(AlphaFold2):
-    def __init__(self, weights, use_remat=True):
+    def __init__(self, weights, use_remat=True, bfloat16=False):
         name = 'model_1_multimer_v3'
         params = data.get_model_haiku_params(name, str(weights))
         self.stacked_parameters = jax.tree.map(lambda p: jnp.asarray(p)[None], params)
@@ -54,7 +54,10 @@ class SingleAF2(AlphaFold2):
         # 24 GiB machine a 124-231 residue complex peaks around 2.7-5.4 GB, so the
         # trade can be worth reversing; --remat off measures it.
         cfg.model.global_config.use_remat = use_remat
-        cfg.model.global_config.bfloat16 = False
+        # The workload is memory-bandwidth bound (see experiments/mosaic_af2/
+        # performance/README.md), so halving activation bytes is the lever the
+        # diagnosis implies. It changes numerics; the CPU/MPS gate must be re-run.
+        cfg.model.global_config.bfloat16 = bfloat16
         cfg.model.num_extra_msa = 1
         cfg.model.resample_msa_in_recycling = False
 
@@ -378,6 +381,10 @@ def main():
     ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
                     help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
                          'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--bfloat16', choices=['on', 'off'], default='off',
+                    help='Run the Evoformer in bfloat16. Halves activation traffic on a\n'
+                         'bandwidth-bound machine but changes numerics; off is the\n'
+                         'published float32 setting.')
     ap.add_argument('--remat-policy', choices=sorted(REMAT_POLICIES), default='default',
                     help='Which intermediates the Evoformer checkpoint keeps. default\n'
                          'recomputes everything (upstream behaviour); dots keeps matmul\n'
@@ -417,7 +424,8 @@ def main():
     print('DEVICES', devices, flush=True)
     np.random.seed(args.seed)
     apply_remat_policy(args.remat_policy)
-    model = SingleAF2(args.weights, use_remat=args.remat == 'on')
+    model = SingleAF2(args.weights, use_remat=args.remat == 'on',
+                      bfloat16=args.bfloat16 == 'on')
     chains = [TargetChain(target_sequence, use_msa=False,
                          template_chain=target_structure[0][0])] if target else []
     features, _ = model.binder_features(args.length, chains=chains)
@@ -484,7 +492,7 @@ def main():
         compile_and_first_gradient_seconds=compile_first_s, warm_gradient_seconds=warm_s,
         # Reported at probe time so a target's feasibility on this machine is known
         # before committing to a full optimization.
-        remat=args.remat, remat_policy=args.remat_policy, probe_device_memory_stats=devices[0].memory_stats(),
+        remat=args.remat, remat_policy=args.remat_policy, bfloat16=args.bfloat16, probe_device_memory_stats=devices[0].memory_stats(),
         probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'
