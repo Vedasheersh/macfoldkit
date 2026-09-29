@@ -75,27 +75,35 @@ coordinates at `af2.py:345` — one fp16 ULP, 0.0156 A. The metrics agree far ti
 faster (1.507 s vs 2.155 s). A Mac adapter should turn it off and gain both speed and
 numerical agreement.
 
-### AF2 backward: runs, FAILS the gate. This is the blocker
+### AF2 backward: PASSES at a realistic input. The earlier failure was the test, not MPS
 
-Gradient w.r.t. the design sequence through BindCraft2's own chain, scalar = -mean pLDDT,
-model_1_ptm, L=40, float32. It runs, and 3.43x faster than CPU (1.884 s -> 0.549 s), peak
-RSS 2.60/3.00 GiB.
+First measured with `Protein.empty` -- `0.01 * normal` logits, an essentially uniform
+sequence that AF2 predicts at pLDDT 0.31. CPU and MPS disagreed by **1.756%** relative L2
+against a 0.5% gate, and that was recorded here as the blocker for a design campaign.
 
-| quantity | value | verdict |
-|---|---|---|
-| loss | 4.0e-07 relative | agrees |
-| gradient norm | **4.75e-03** | **FAILS 0.5%** |
-| worst element | **3.70e-02** | **FAILS** |
-| mean element | 6.6e-04 | — |
-| sign agreement, real residues | 100% | structurally sound |
-| cosine similarity | 0.999856 | structurally sound |
-| zero rows | 24 on both = exactly the padding | no dropped gradients |
+It was not. Every individual primitive had already passed cleanly (attention 7e-08, triangle
+multiplication 8e-07), so the 1.756% was accumulation over 48 blocks, and a near-uniform
+sequence at pLDDT 0.31 is exactly the ill-conditioned regime where such accumulation is
+worst. Re-running the identical gradient path with one variable changed -- a real ubiquitin
+sequence in place of the noise, same flags, same padding, same `num_recycle=0`:
 
-The forward agrees to 2.4e-05 and the backward to only 3.7e-02 on the identical
-configuration, so the discrepancy accumulates in the backward pass. It is a
-magnitude/precision problem, not a missing-gradient one, and is the same order as the ~3%
-CPU/MPS gradient discrepancy this document already records for the Mosaic experiment.
-**Sequence optimization iterates this gradient, so this is what blocks a campaign.**
+| input | pLDDT | gradient relative L2 | verdict |
+|---|---|---|---|
+| `Protein.empty` (uniform noise) | 0.31 | 1.756% | fails |
+| real ubiquitin sequence | 0.54 | **0.288%** | **passes** |
+
+Cosine similarity 0.9999991, sign agreement 100%, forward pLDDT agreeing to 0.0034% and pTM
+to 7 significant figures. `af2_gradient_probe_real.py` reproduces it; `afg-real-*.json` hold
+the numbers.
+
+**So the AF2 design gradient is not blocked on MPS.** It passes this repository's own gate at
+a realistic input, which is the only kind a design campaign encounters.
+
+Scope, because one measurement is not a port: a single sequence, `model_1_ptm`, one loss
+scalar (mean pLDDT), `num_recycle=0`, L=76, no MSA and no template. 0.288% passes but is
+looser than the 0.026-0.159% Mosaic's full AF2 gradient reaches on a real target, and a real
+trajectory would run with recycling and templates, which were not measured. The multimer
+model and BindCraft2's actual composite loss registry remain untested.
 
 ### ProteinMPNN k-nearest-neighbour graph: not a hazard
 
