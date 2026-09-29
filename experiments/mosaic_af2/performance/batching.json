@@ -1,0 +1,27 @@
+{
+  "length": 48,
+  "total_length": 124,
+  "runs": [
+    {
+      "batch": 1,
+      "seconds": 1.979591542010894,
+      "seconds_per_design": 1.979591542010894,
+      "peak_gb": 3.018600455,
+      "speedup_per_design": 1.0
+    },
+    {
+      "batch": 2,
+      "seconds": 3.993792041990673,
+      "seconds_per_design": 1.9968960209953366,
+      "peak_gb": 4.180651691,
+      "speedup_per_design": 0.9913343114501189
+    },
+    {
+      "batch": 4,
+      "seconds": 8.150755375012523,
+      "seconds_per_design": 2.0376888437531306,
+      "peak_gb": 6.802089919,
+      "speedup_per_design": 0.9714886294242895
+    }
+  ]
+}
