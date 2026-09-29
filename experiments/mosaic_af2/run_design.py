@@ -444,6 +444,10 @@ def main():
         gradient_devices=[str(d) for d in gradient.devices()],
         mpnn_weight=args.mpnn_weight, mpnn_samples=args.mpnn_samples,
         compile_and_first_gradient_seconds=compile_first_s, warm_gradient_seconds=warm_s,
+        # Reported at probe time so a target's feasibility on this machine is known
+        # before committing to a full optimization.
+        probe_device_memory_stats=devices[0].memory_stats(),
+        probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'
                if target else 'Small de novo monomer, full AF2 confidence/structure gradients; not binder design or experimental validation.'))
