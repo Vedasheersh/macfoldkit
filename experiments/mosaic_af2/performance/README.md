@@ -92,32 +92,68 @@ isolated layer-norm backward (jax-mps 1.9x).
 The lesson worth keeping: on this machine a single timing is not evidence. jax-mps's
 run-to-run spread is large enough to manufacture a 1.5x "finding" from noise.
 
-## How far from the limit, precisely
+## How far from the limit: about 70-78% of the bandwidth roofline
 
-XLA cost analysis of the same computation (`cost_analysis.py`, run on the CPU backend since
-jax-mps does not expose it), 124-residue complex, one `value_and_grad`:
+**This section previously claimed 3.7%. That was wrong, and it was wrong because the
+measuring instrument was broken.**
 
-| quantity | value |
+`cost_analysis.py` used XLA's `HloCostAnalysis`. XLA counts a `while`/`scan` body **once,
+regardless of trip count**. AF2's Evoformer is `layer_stack(48)` (modules_multimer.py:477,
+`evoformer_num_block: 48`), implemented as `hk.scan` (layer_stack.py:156), so it lowers to a
+single HLO `while`. The extra-MSA stack (4 blocks) and template pair stack (2 blocks) are
+scans too. Every FLOP and byte figure derived from that call undercounted by roughly the
+trip count.
+
+Verified directly (`scan_cost_check.py`, CPU-only, no weights):
+
+| trip count | scan FLOPs | loop FLOPs |
+|---|---|---|
+| 1 | 524,288 | 524,288 |
+| 48 | **524,290** | **25,165,824** |
+| ratio | **1.00x** | **48.00x** |
+
+Scan cost is flat from 2 to 48 while the unrolled equivalent scales exactly 48x. Gradient
+cost is flat too. The instrument truncates the model to roughly one block.
+
+Two artifact-only checks confirm the undercount without relying on that probe. The reported
+4.748 GB for a whole forward is **smaller than one of its own components**: the
+triangle-attention logits tensor is (124, 4, 124, 124) float32 = 30.5 MB, written and read
+at minimum, twice per block over 48 blocks = 5.86 GB. And a hand FLOP count per Evoformer
+block at N=124, c_z=128 gives roughly 22-24 GFLOP, so 48 blocks is about 1060-1150 GFLOP
+against XLA's reported 56.4 GFLOP for the forward -- a factor near 19-21.
+
+### Corrected position
+
+| quantity | corrected |
 |---|---|
-| FLOPs | 167.7 GFLOP |
-| bytes accessed | 21.5 GB |
-| arithmetic intensity | 7.78 FLOP/byte |
+| forward FLOPs | ~1060-1150 GFLOP (not 56.4) |
+| gradient FLOPs, at the measured 4.13x multiplier | ~4400 GFLOP |
+| achieved throughput | ~2200 GFLOPS, **~30% of the 7404 GFLOPS matmul peak** |
+| gradient bytes | ~409-460 GB (not 21.5) |
+| bandwidth-bound lower bound | ~1.44-1.61 s |
+| **measured** | **1.994 s** |
+| **fraction of bandwidth roofline** | **~72-78%** |
 
-This machine's measured rooflines: **7.4 TFLOPS** compute, **285 GB/s** bandwidth (both
-backends agree; see `bandwidth-*.json`). The ridge point is 7404/285 = 26 FLOP/byte, and at
-7.78 FLOP/byte this workload is firmly **bandwidth-bound**.
+**The design gradient runs at roughly three quarters of this machine's memory-bandwidth
+roofline.** Driving it to 100% would be about a **1.3x** speedup, not 27x.
 
-| bound | time |
-|---|---|
-| compute-bound: 167.7 GFLOP / 7.4 TFLOPS | 0.023 s |
-| **bandwidth-bound: 21.5 GB / 285 GB/s** | **0.076 s** |
-| **measured** | **2.068 s** |
+This is also the only reading consistent with the rest of this document. Ten independent
+levers failing to help is exactly what a workload at ~75% of its roofline looks like, and is
+very hard to explain at 3.7%. The internal contradiction should have been the tell.
 
-**The design gradient achieves 3.7% of its roofline.** Caveats worth stating: cost analysis
-is approximate, and the byte count comes from XLA's fused HLO, so it describes an idealised
-fused execution rather than what jax-mps actually issues — the real traffic is higher and
-the true gap correspondingly smaller. But it is not a factor of 27 smaller, and no
-interpretation of these numbers puts this workload near its limit.
+### What still has headroom
+
+Being near the bandwidth roofline bounds what *scheduling* can win, not what *doing less
+work* can win. Two concrete reductions were identified and are not yet tested:
+
+- **OuterProductMean contraction order** (modules.py compute_chunk). At the single-sequence
+  MSA depth this experiment uses, the contraction is performed in an order roughly 13-14x
+  more expensive than necessary; the term is about 16% of model FLOPs.
+- **The 4-block extra-MSA stack** runs full-width pair operations on an all-zero, fully
+  masked MSA -- about 7.4% of model FLOPs for no information.
+
+Both change the arithmetic, so both need the CPU/MPS gradient gate re-run, and the second
+needs the design output re-screened rather than only re-timed.
 
 ## Where the time actually goes
 
@@ -129,9 +165,12 @@ interpretation of these numbers puts this workload near its limit.
 | MPNN inverse-folding term | 0.072 | 3.4% |
 | all triangle multiplications | ~0.072 | ~3.5% |
 
-Nothing dominates. The dominant op is 3.5% of the step; the MPNN term another 3.4%. The
-time is spread across a long chain of medium-sized, low-arithmetic-intensity operations —
-layer norms, gating, softmaxes, transposes over the pair tensor.
+**Correction.** This section previously said "nothing dominates" and put triangle
+multiplication at 3.5% of the step, extrapolated from an isolated-op timing multiplied by a
+hand-counted call count. That was wrong by roughly 9x. By FLOPs, four pair operations are
+about 97% of the trunk, and the trunk is about 91% of the model: triangle multiplication
+~29%, triangle attention ~29%, OuterProductMean's output projection ~16%, pair transition
+~16%. The MPNN term really is 3.4%, measured by ablation rather than extrapolation.
 
 The 4.13x backward multiplier is full gradient checkpointing recomputing the whole forward,
 which suggested spending idle memory to avoid it. That trade is **inverted on unified
@@ -152,7 +191,7 @@ resource is the limit, which is why no single lever helps.
 | MPS (jax-mps) | 2.08 |
 | **GPU speedup** | **3.1x** |
 
-A 3.1x GPU speedup, at ~9% of peak FLOPs, is the honest characterization: this workload
+A 3.1x GPU speedup, at roughly 30% of matmul peak, is the honest characterization: this workload
 suits the GPU poorly. It is not idle — batching and async dispatch both fail to help, so it
 is genuinely busy — it is simply executing many low-intensity operations. That is a
 property of the Evoformer's op mix under reverse-mode AD, not of jax-mps.
