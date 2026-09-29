@@ -257,16 +257,34 @@ def validate_protocol(path, args, target, spec):
         if protocol['optimization'][key] != value:
             raise ValueError(f'Frozen protocol optimization.{key}: expected '
                              f"{protocol['optimization'][key]}, executing {value}")
+    # A protocol fixes one seed ('seed') or pre-registers a set ('seeds'). The set form
+    # exists so a campaign declares every seed it will run BEFORE running any of them;
+    # it is not a licence to keep drawing seeds until one passes.
+    binder, redesign = protocol['binder'], protocol['redesign']
+    if ('seed' in binder) == ('seeds' in binder):
+        raise ValueError('Frozen protocol binder needs exactly one of seed or seeds')
+    if 'seeds' in binder:
+        if sorted(set(binder['seeds'])) != sorted(binder['seeds']):
+            raise ValueError('Frozen protocol binder.seeds must be distinct')
+        if args.seed not in binder['seeds']:
+            raise ValueError(f"Frozen protocol pre-registered seeds {binder['seeds']}; "
+                             f'got {args.seed}')
+    # MPNN seeds are derived from the binder seed, so a seed set declares the rule.
+    if ('seeds' in redesign) == ('seed_offsets' in redesign):
+        raise ValueError('Frozen protocol redesign needs exactly one of seeds or seed_offsets')
+    mpnn_seeds = ([args.seed + offset for offset in redesign['seed_offsets']]
+                  if 'seed_offsets' in redesign else redesign['seeds'])
     required = [
-        (args.length, protocol['binder']['length'], 'binder length'),
-        (args.seed, protocol['binder']['seed'], 'seed'),
+        (args.length, binder['length'], 'binder length'),
         (target['length'], protocol['target']['length'], 'target length'),
         ('model_1_multimer_v3', protocol['model']['name'], 'model'),
         (1, protocol['model']['forward_passes'], 'forward passes'),
         ('float32', protocol['model']['precision'], 'precision'),
         (7, protocol['model']['objective_key'], 'objective seed'),
-        ([args.seed + 100, args.seed + 101], protocol['redesign']['seeds'], 'MPNN seeds'),
+        ([args.seed + 100, args.seed + 101], mpnn_seeds, 'MPNN seeds'),
     ]
+    if 'seed' in binder:
+        required.append((args.seed, binder['seed'], 'seed'))
     for actual, expected, label in required:
         if actual != expected:
             raise ValueError(f'Frozen protocol {label}: expected {expected}, got {actual}')

@@ -18,3 +18,4 @@ build/
 !experiments/mosaic_af2/ubiquitin/v2/design/hard-output.npz
 !experiments/mosaic_af2/ubiquitin/v2/design/optimized.npz
 !experiments/mosaic_af2/ubiquitin/v2/design/final-pssm.npz
+!experiments/mosaic_af2/ubiquitin/v3/**/design/*.npz

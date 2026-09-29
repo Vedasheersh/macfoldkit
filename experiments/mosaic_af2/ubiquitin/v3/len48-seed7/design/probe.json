@@ -1,0 +1,203 @@
+{
+  "platform": "mps",
+  "length": 48,
+  "seed": 7,
+  "objective_seed": 7,
+  "target": {
+    "input_name": "ubiquitin-target.cif",
+    "input_sha256": "f33c07b4af9930f499ecc76e343b5665ed754bcb73a5af20e3df051f4c711500",
+    "source_chain": "A",
+    "source_residue_ids": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20",
+      "21",
+      "22",
+      "23",
+      "24",
+      "25",
+      "26",
+      "27",
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "47",
+      "48",
+      "49",
+      "50",
+      "51",
+      "52",
+      "53",
+      "54",
+      "55",
+      "56",
+      "57",
+      "58",
+      "59",
+      "60",
+      "61",
+      "62",
+      "63",
+      "64",
+      "65",
+      "66",
+      "67",
+      "68",
+      "69",
+      "70",
+      "71",
+      "72",
+      "73",
+      "74",
+      "75",
+      "76"
+    ],
+    "sequence": "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG",
+    "length": 76,
+    "template": true,
+    "msa": false,
+    "cleanup": "Removed ligands/waters and alternative conformations; preserved protein coordinates"
+  },
+  "total_length": 124,
+  "chain_order": [
+    "binder_A",
+    "target_B"
+  ],
+  "feature_sha256": "add0ccfdde1e754e3b7cc12115e1a481fed5e923d770cbfe9f6da0cc176b5909",
+  "loss_terms": [
+    {
+      "type": "PLDDTLoss",
+      "weight": 1.0
+    },
+    {
+      "type": "WithinBinderPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "WithinBinderContact",
+      "weight": 1.0,
+      "num_contacts_per_residue": 8,
+      "max_contact_distance": 14.0,
+      "min_sequence_separation": 8
+    },
+    {
+      "type": "DistogramRadiusOfGyration",
+      "weight": 0.1
+    },
+    {
+      "type": "HelixLoss",
+      "weight": 0.3
+    },
+    {
+      "type": "BinderTargetContact",
+      "weight": 1.0,
+      "contact_distance": 8.0,
+      "paratope_size": 12,
+      "epitope_idx": null
+    },
+    {
+      "type": "BinderTargetPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "TargetBinderPAE",
+      "weight": 0.05
+    },
+    {
+      "type": "IPTMLoss",
+      "weight": 0.25
+    },
+    {
+      "type": "InverseFoldingSequenceRecovery",
+      "weight": 5.0,
+      "temp": 0.1,
+      "num_samples": 4,
+      "jacobi_iterations": 10
+    }
+  ],
+  "protocol_sha256": "8201d65e7c3e2d61e2de21883ea98d2baf3faedca94934d769f6ff23c1b3dad0",
+  "contact_loss_implementation": "metal_losses.py: equivalent contact reduction",
+  "model": "model_1_multimer_v3",
+  "precision": "float32",
+  "forward_passes": 1,
+  "initial_loss": 14.274493217468262,
+  "initial_aux": [
+    {
+      "plddt": 0.32278433442115784
+    },
+    {
+      "bb_pae": 19.07769775390625
+    },
+    {
+      "intra_contact": -4.858733654022217
+    },
+    {
+      "radius_of_gyration": 17.404199600219727
+    },
+    {
+      "helix": -0.2601065933704376
+    },
+    {
+      "target_contact": -5.679945468902588
+    },
+    {
+      "bt_pae": 26.522445678710938
+    },
+    {
+      "tb_pae": 22.27704429626465
+    },
+    {
+      "iptm": 0.07450053095817566
+    },
+    {
+      "sequence_recovery": 0.00025386232300661504
+    }
+  ],
+  "gradient_devices": [
+    "MPS:0"
+  ],
+  "mpnn_weight": 5.0,
+  "mpnn_samples": 4,
+  "compile_and_first_gradient_seconds": 5.09734895901056,
+  "warm_gradient_seconds": 2.09470612500445,
+  "versions": {
+    "jax": "0.11.2",
+    "jaxlib": "0.11.2",
+    "jax-mps": "0.11.0",
+    "equinox": "0.13.8"
+  },
+  "scope": "Small templated-target binder design; computational candidates only, no binding or experimental validation."
+}

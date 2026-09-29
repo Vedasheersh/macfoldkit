@@ -11,6 +11,9 @@ It does not establish binding, affinity, specificity, expression or stability.
 > byte-identical screen. It eliminates the relaxed-to-hard gap measured here
 > (2.435 -> 0.000) and improves fold and pose reproducibility substantially, but also
 > returns 0/3. This v1 run is preserved unchanged.
+> A later [v3 campaign](v3/README.md) shows this run and v2 were each a single draw:
+> across a pre-registered 3-seed set, seed-to-seed spread exceeds every protocol effect
+> measured, and 3 of 18 candidates passed the same screen.
 
 ## Recorded outcome
 

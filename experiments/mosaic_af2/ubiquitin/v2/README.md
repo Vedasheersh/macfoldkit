@@ -1,5 +1,10 @@
 # Ubiquitin binder design, v2: hardened optimization schedule
 
+> **Follow-up:** [`../v3/`](../v3/README.md) runs a pre-registered 3-seed campaign at two
+> binder lengths. It produced this project's first screen passes (3/18 candidates) and
+> shows that the single-seed result below is one draw, not a verdict on the protocol:
+> seed-to-seed spread is ~30 pLDDT points, larger than any protocol effect measured here.
+
 Computational workflow experiment. **No candidate passed the screen, and this is not
 evidence of binding.** The v1 run in [`../`](../) is preserved unchanged.
 
