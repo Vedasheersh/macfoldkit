@@ -81,9 +81,48 @@ the 45,227-file CCD molecule directory would be downloaded again.
    `--no-deps` pulls a newer runtime and the grammar fails with
    `Could not deserialize ATN with version 3 (expected 4)`.
 
-## Remaining cost question
+## Measured on MPS. The earlier estimate in this document was wrong
 
-This is the part that decides whether to pursue it.
+| sampling_steps | CPU warm | MPS warm | speedup | MPS reported peak | status |
+|---|---|---|---|---|---|
+| 1 | 8.75 s | — | — | — | **fails**, jax-mps SVD bug |
+| 5 | 9.02 s | 3.02 s | 2.98x | 44.4 GB | finite |
+| **25 (Mosaic default)** | 10.74 s | **3.68 s** | 2.92x | 44.4 GB | finite |
+
+Against the measured AF2 baseline of **2.08 s/step and 2.66 GB**, a Boltz2 design step at
+the default 25 sampling steps costs **1.77x the time** — not the 7-10x this document
+previously estimated. A 125-step design would be about **7.7 minutes**, against 4.4 for AF2.
+The MPS speedup, 2.9-3.0x, matches AF2's 3.1x, so Boltz2 is not unusually badly served by
+this backend.
+
+**Diffusion is not the cost driver, which is what the estimate got wrong.** On CPU the
+marginal cost is 0.083 s per sampling step; going from 1 to 25 steps adds only 2.07 s of a
+10.74 s total. The implied trunk-and-fixed cost is 8.67 s, about 81% of the step. Reducing
+`sampling_steps` is therefore *not* the affordability lever it looked like.
+
+### Two real problems
+
+**1. Memory.** The reported peak is 44.4 GB against a 24.48 GB device limit. It is identical
+at 5 and 25 sampling steps, which suggests it may be an allocator high-water mark rather
+than live residency, so the figure needs interpreting before it is quoted as a hard number —
+process RSS was not recorded and should be. Either way it is an order of magnitude above
+AF2's 2.66 GB and is the thing most likely to prevent a real campaign, especially at EGFR
+scale where AF2 already reaches 5.42 GB.
+
+**2. A jax-mps backend bug at `sampling_steps=1`:**
+
+```
+JaxRuntimeError: INTERNAL: Output count mismatch: expected 5, got 0
+  (eval: svd_impl: sgesvdx_ failed with code -4)
+```
+
+An SVD in the MLX/MPS backend fails with a LAPACK illegal-argument code. It affects only
+`sampling_steps=1`; 5 and 25 both run. This is a backend defect, not a Boltz2 or Mosaic one,
+and is worth reporting upstream.
+
+## The estimate that this superseded
+
+Retained for honesty; the measurements above replace it.
 
 | | AF2 design step | Boltz2 design step |
 |---|---|---|
