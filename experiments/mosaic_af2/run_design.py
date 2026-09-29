@@ -211,15 +211,55 @@ def build_terms(spec, mpnn):
     return combined
 
 
+BINDCRAFT_STAGES = [
+    dict(name='logits_1', n_steps=50, soft_start=0.0, soft_end=0.9,
+         temp_start=1.0, temp_end=1.0, hard=False),
+    dict(name='logits_2', n_steps=25, soft_start=0.9, soft_end=1.0,
+         temp_start=1.0, temp_end=1.0, hard=False),
+    dict(name='soft_anneal', n_steps=45, soft_start=1.0, soft_end=1.0,
+         temp_start=1.0, temp_end=0.01, hard=False),
+    dict(name='hard', n_steps=5, soft_start=1.0, soft_end=1.0,
+         temp_start=0.01, temp_end=0.01, hard=True),
+]
+
+
+def optimizer_settings(args):
+    """Single source of truth for what is actually handed to the optimizer.
+
+    validate_protocol compares these values against the frozen protocol, so a
+    code change that is not mirrored in the protocol file cannot pass silently.
+    """
+    if args.optimizer == 'simplex_apgm':
+        return dict(algorithm='simplex_APGM', steps=args.steps,
+                    stepsize=0.2, momentum=0.0)
+    stages = BINDCRAFT_STAGES
+    if getattr(args, 'smoke', 0):
+        # Path-only smoke test: same stage structure, few steps. Never usable with
+        # --protocol, so the frozen schedule cannot be shortened by accident.
+        stages = [s | {'n_steps': args.smoke} for s in BINDCRAFT_STAGES]
+    return dict(algorithm='mosaic.optimizers.bindcraft_design',
+                implementation=('upstream 4 x mosaic.optimizers.colabdesign_stage '
+                                '(ColabDesign/BindCraft schedule)'),
+                steps=sum(s['n_steps'] for s in stages),
+                lr=0.1, norm_seq_grad=True, stages=stages)
+
+
 def validate_protocol(path, args, target, spec):
     """Check the frozen design settings without modifying screening thresholds."""
     protocol = json.loads(path.read_text())
+    executed = optimizer_settings(args)
+    if executed['steps'] != args.steps:
+        raise ValueError(f"--steps {args.steps} differs from the {args.optimizer} "
+                         f"schedule total {executed['steps']}")
+    for key, value in executed.items():
+        if key not in protocol['optimization']:
+            raise ValueError(f'Frozen protocol is missing optimization.{key}')
+        if protocol['optimization'][key] != value:
+            raise ValueError(f'Frozen protocol optimization.{key}: expected '
+                             f"{protocol['optimization'][key]}, executing {value}")
     required = [
         (args.length, protocol['binder']['length'], 'binder length'),
         (args.seed, protocol['binder']['seed'], 'seed'),
-        (args.steps, protocol['optimization']['steps'], 'steps'),
-        (0.2, protocol['optimization']['stepsize'], 'step size'),
-        (0.0, protocol['optimization']['momentum'], 'momentum'),
         (target['length'], protocol['target']['length'], 'target length'),
         ('model_1_multimer_v3', protocol['model']['name'], 'model'),
         (1, protocol['model']['forward_passes'], 'forward passes'),
@@ -287,7 +327,19 @@ def main():
     ap.add_argument('--mpnn-samples', type=int, default=4)
     ap.add_argument('--target', type=Path, help='One complete protein target chain, used as a template')
     ap.add_argument('--protocol', type=Path, help='Optional frozen binder protocol JSON to verify and copy')
+    ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
+                    help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
+                         'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--smoke', type=int, default=0, metavar='N',
+                    help='Path-only smoke test: run N steps per bindcraft stage. Refused with '
+                         '--protocol so the frozen schedule cannot be shortened by accident.')
     args = ap.parse_args()
+    if args.smoke:
+        if args.optimizer != 'bindcraft' or args.protocol:
+            ap.error('--smoke requires --optimizer bindcraft and forbids --protocol')
+        if args.smoke < 1:
+            ap.error('--smoke must be positive')
+        args.steps = 4 * args.smoke
     if args.length < 32 or args.steps < 1:
         ap.error('length >=32 and steps >=1 required')
     if not np.isfinite(args.mpnn_weight) or args.mpnn_weight < 0 or args.mpnn_samples < 1:
@@ -320,9 +372,33 @@ def main():
         mpnn = ProteinMPNN.from_pretrained(backbone_noise=0.0)
     terms = build_terms(spec, mpnn)
     loss = DesignLoss(model, features, terms)
+    settings = optimizer_settings(args)
+    stages = settings.get('stages', [])
     # NumPy initialization ensures CPU and GPU start from exactly the same values.
-    logits = np.random.default_rng(args.seed).gumbel(size=(args.length, 20)).astype(np.float32) * 0.5
-    x = jnp.asarray(np.exp(logits) / np.exp(logits).sum(-1, keepdims=True))
+    if args.optimizer == 'simplex_apgm':
+        logits = np.random.default_rng(args.seed).gumbel(size=(args.length, 20)).astype(np.float32) * 0.5
+        x0 = jnp.asarray(np.exp(logits) / np.exp(logits).sum(-1, keepdims=True))
+        x = x0
+    else:
+        # BindCraft's documented initialization. The scale matters: at the schedule's
+        # temp 0.01 the softmax saturates, and logit std above ~0.5 silently zeroes the
+        # gradient on a growing fraction of residues (measured: 8/48 rows at std 0.63,
+        # 44/48 at std 16), which would make the last two stages no-ops.
+        z0 = 0.01 * np.random.default_rng(args.seed).standard_normal((args.length, 20))
+        z0 = (z0 - z0.mean(-1, keepdims=True)).astype(np.float32)
+        x0 = jnp.asarray(z0)
+        # Probe at the first pseudo-sequence the schedule actually evaluates, so the
+        # CPU/MPS parity gate covers the stage-1 regime rather than a simplex point.
+        # Computed in host NumPy, not on device: the gate compares two gradients at
+        # one input, so the input itself must be bit-identical on both platforms.
+        first = stages[0]
+        soft0 = np.float32(first['soft_start']
+                           + (first['soft_end'] - first['soft_start']) / first['n_steps'])
+        scaled = z0 / np.float32(first['temp_start'])
+        exponential = np.exp(scaled - scaled.max(-1, keepdims=True))
+        soft_sequence = exponential / exponential.sum(-1, keepdims=True)
+        probe = (soft0 * soft_sequence + (np.float32(1.0) - soft0) * z0).astype(np.float32)
+        x = jnp.asarray(probe)
     key = jax.random.key(args.seed)
     raw_vg = eqx.filter_jit(eqx.filter_value_and_grad(loss, has_aux=True))
     print('COMPILING_FULL_STRUCTURE_CONFIDENCE_GRADIENT', flush=True)
@@ -358,28 +434,98 @@ def main():
     if args.probe_only:
         return
     history = []
-    best = {'value': float(initial), 'x': np.asarray(x).copy()}
+    apgm = args.optimizer == 'simplex_apgm'
+    best = {'value': float(initial), 'x': np.asarray(x).copy()} if apgm else {'value': np.inf, 'x': None}
+    pending = {}
     # Replace only the process-local optimizer evaluation helper. Preserve raw
     # errors rather than upstream's nan_to_num; optimizer math is unchanged.
     def checked_eval(loss_function, x, key):
         (value, aux), g = jax.block_until_ready(raw_vg(jnp.asarray(x, dtype=jnp.float32), key=key))
         check(value, g)
-        if float(value) < best['value']:
-            best.update(value=float(value), x=np.asarray(x).copy())
-        history.append({'loss':float(value), 'aux':plain(aux)})
-        (args.output/'trajectory.json').write_text(json.dumps(history, indent=2)+'\n')
+        if apgm:
+            if float(value) < best['value']:
+                best.update(value=float(value), x=np.asarray(x).copy())
+            history.append({'loss':float(value), 'aux':plain(aux)})
+            (args.output/'trajectory.json').write_text(json.dumps(history, indent=2)+'\n')
+        else:
+            # Stash for the trajectory_fn, which alone knows the stage settings.
+            # check() already brought the gradient to the host, so counting saturated
+            # rows here adds no extra synchronization.
+            pending.update(value=float(value), aux=plain(aux), x=np.asarray(x).copy(),
+                           zero_grad_rows=int((np.abs(np.asarray(g)).sum(-1) == 0).sum()))
         return (value, aux), g - g.mean(-1, keepdims=True)
+
+    # bindcraft_design reports (soft, temp, hard) per evaluation but not the stage,
+    # so synthesize stage indices from a counter and the known schedule lengths.
+    bounds, total = [], 0
+    for index, stage in enumerate(stages):
+        total += stage['n_steps']
+        bounds.append((total, index, stage['name']))
+
+    def record(aux, z):
+        step = len(history)
+        stage_index, stage_name, stage_start = 0, (stages[0]['name'] if stages else ''), 0
+        for end, index, name in bounds:
+            if step < end:
+                stage_index, stage_name = index, name
+                stage_start = end - stages[index]['n_steps']
+                break
+        if not pending or pending['value'] != aux['loss']:
+            raise ValueError('Trajectory entry does not match the evaluated iterate')
+        entry = {'loss': pending['value'], 'aux': pending['aux'], 'step': step,
+                 'stage': stage_index, 'stage_name': stage_name, 'step_in_stage': step - stage_start,
+                 'soft': float(aux['soft']), 'temp': float(aux['temp']), 'hard': float(aux['hard']),
+                 'nnz': float(aux['nnz']), 'zero_grad_rows': pending['zero_grad_rows']}
+        # Select only among hard-stage evaluations: those alone are true one-hot
+        # sequences, so their objectives are comparable and the exported sequence
+        # is exactly the sequence that was evaluated.
+        if entry['hard'] == 1.0 and entry['loss'] < best['value']:
+            best.update(value=entry['loss'], x=pending['x'].copy())
+        history.append(entry)
+        (args.output/'trajectory.json').write_text(json.dumps(history, indent=2)+'\n')
+        pending.clear()
+        return entry['loss']
+
     t = time.perf_counter()
     with patch.object(optimizers, '_eval_loss_and_grad', checked_eval):
-        final_x, _ = optimizers.simplex_APGM(loss_function=loss, x=x, n_steps=args.steps,
-            stepsize=0.2, momentum=0.0, key=key)
-        checked_eval(loss, final_x, key)
+        if apgm:
+            final_x, _ = optimizers.simplex_APGM(loss_function=loss, x=x0, n_steps=args.steps,
+                stepsize=0.2, momentum=0.0, key=key)
+            checked_eval(loss, final_x, key)
+            final_pssm = np.asarray(final_x)
+        else:
+            pssm, _ = optimizers.bindcraft_design(loss_function=loss, x=x0, lr=settings['lr'],
+                logits_iters=(stages[0]['n_steps'], stages[1]['n_steps']),
+                soft_iters=stages[2]['n_steps'], hard_iters=stages[3]['n_steps'],
+                key=key, trajectory_fn=record)
+            final_pssm = np.asarray(pssm)
     report['optimization_seconds'] = time.perf_counter()-t
     report['steps'] = args.steps
-    report['best_soft_loss'] = best['value']
+    # Name the selected objective for what it is. Under simplex_apgm it is a SOFT
+    # objective and the argmax export changes it; under bindcraft the selected
+    # iterate is a one-hot, so this is already the hard-sequence objective.
+    if apgm:
+        report['best_soft_loss'] = best['value']
+    else:
+        report['best_hard_stage_loss'] = best['value']
+    if best['x'] is None:
+        raise ValueError('No hard-stage evaluation was recorded; nothing to export')
     x_best = jnp.asarray(best['x'])
-    if not np.allclose(np.asarray(x_best).sum(-1), 1, atol=1e-5) or np.asarray(x_best).min() < -1e-6:
+    if apgm and (not np.allclose(np.asarray(x_best).sum(-1), 1, atol=1e-5) or np.asarray(x_best).min() < -1e-6):
         raise ValueError('Invalid simplex')
+    if not apgm:
+        # The selected hard-stage iterate must be an exact one-hot.
+        selected = np.asarray(x_best)
+        if not np.array_equal(selected, np.eye(20, dtype=selected.dtype)[selected.argmax(-1)]):
+            raise ValueError('Selected hard-stage iterate is not one-hot')
+        if not np.allclose(final_pssm.sum(-1), 1, atol=1e-5) or final_pssm.min() < -1e-6:
+            raise ValueError('Invalid simplex')
+        report['bindcraft'] = dict(stages=stages, lr=settings['lr'],
+            hard_stage_losses=[e['loss'] for e in history if e['hard'] == 1.0],
+            zero_grad_rows_by_stage=[max((e['zero_grad_rows'] for e in history
+                if e['stage'] == i), default=0) for i in range(len(stages))],
+            final_pssm_temp1_mean_max_probability=float(final_pssm.max(-1).mean()))
+        np.savez(args.output/'final-pssm.npz', probabilities=final_pssm)
     np.savez(args.output/'optimized.npz', probabilities=best['x'])
     tokens = np.asarray(x_best).argmax(-1)
     sequence = ''.join(TOKENS[i] for i in tokens)
@@ -430,6 +576,11 @@ def main():
         (args.output/f"{item['name']}.yaml").write_text(yaml)
     report.update(candidates=candidates, max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         total_seconds=time.perf_counter()-start, device_memory_stats=devices[0].memory_stats())
+    for name, value in report.items():
+        try:
+            json.dumps({name: value})
+        except TypeError as error:
+            raise TypeError(f'summary.json key {name!r} is not serializable: {error}') from error
     (args.output/'summary.json').write_text(json.dumps(report, indent=2)+'\n')
     print('DESIGN_COMPLETE', json.dumps(report), flush=True)
 

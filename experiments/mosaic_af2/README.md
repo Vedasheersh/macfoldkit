@@ -1,8 +1,12 @@
 # Full Mosaic design experiment on Apple Silicon
 
 The current adapter includes a corrected contact-loss backward pass and a
-[48-residue binder / 76-residue ubiquitin experiment](ubiquitin/README.md).
-The CPU/MPS numerical gate passes for that exact complex. The monomer results
+[48-residue binder / 76-residue ubiquitin experiment](ubiquitin/README.md), followed by
+[a v2 run](ubiquitin/v2/README.md) that changes only the optimization schedule
+(`--optimizer bindcraft`, upstream's four-stage BindCraft/ColabDesign schedule).
+Both returned 0/3 against the same frozen screen.
+The CPU/MPS numerical gate passes for that exact complex; for v2 it is re-measured at
+the stage-1 input the new schedule actually evaluates. The monomer results
 below are historical trajectories from before the backward correction; they
 remain available as evidence of the original experiment.
 

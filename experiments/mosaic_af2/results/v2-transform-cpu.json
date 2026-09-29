@@ -1,0 +1,219 @@
+{
+  "platform": "cpu",
+  "length": 48,
+  "stages_from": "mosaic.optimizers.bindcraft_design",
+  "parity": [
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "logits1_start",
+      "soft": 0.0,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": false,
+      "pseudo_row_sum_mean": -0.0007671747718423679,
+      "gradient_absolute_max": 2.9030051231384277,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "logits1_end",
+      "soft": 0.9,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": false,
+      "pseudo_row_sum_mean": 0.899923273983101,
+      "gradient_absolute_max": 0.4209132194519043,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "logits2_end",
+      "soft": 1.0,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.0000000179279596,
+      "gradient_absolute_max": 0.14512516558170319,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "soft_mid",
+      "soft": 1.0,
+      "temp": 0.505,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 0.9999999996895591,
+      "gradient_absolute_max": 0.2909136712551117,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "soft_end",
+      "soft": 1.0,
+      "temp": 0.01,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 0.9999999990711027,
+      "gradient_absolute_max": 56.44163131713867,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "bindcraft_init_0.01",
+      "stage": "hard",
+      "soft": 1.0,
+      "temp": 0.01,
+      "hard": 1.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.0,
+      "gradient_absolute_max": 56.44163131713867,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "logits1_start",
+      "soft": 0.0,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": false,
+      "pseudo_row_sum_mean": -2.301524133499091,
+      "gradient_absolute_max": 2.9030051231384277,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "logits1_end",
+      "soft": 0.9,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": false,
+      "pseudo_row_sum_mean": 0.6698475199421713,
+      "gradient_absolute_max": 0.8468376398086548,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "logits2_end",
+      "soft": 1.0,
+      "temp": 1.0,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.0000000050349866,
+      "gradient_absolute_max": 0.623413622379303,
+      "zero_gradient_rows": 0
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "soft_mid",
+      "soft": 1.0,
+      "temp": 0.505,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.000000000195264,
+      "gradient_absolute_max": 1.2038531303405762,
+      "zero_gradient_rows": 2
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "soft_end",
+      "soft": 1.0,
+      "temp": 0.01,
+      "hard": 0.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.0000000006868799,
+      "gradient_absolute_max": 0.00015664685633964837,
+      "zero_gradient_rows": 44
+    },
+    {
+      "init": "evolved_logits_x30",
+      "stage": "hard",
+      "soft": 1.0,
+      "temp": 0.01,
+      "hard": 1.0,
+      "on_simplex": true,
+      "pseudo_row_sum_mean": 1.0,
+      "gradient_absolute_max": 0.00015664685633964837,
+      "zero_gradient_rows": 44
+    }
+  ],
+  "saturation": [
+    {
+      "init": "v1_gumbel_x0.5",
+      "logit_std": 0.6281509399414062,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 8
+    },
+    {
+      "init": "normal_x0.01",
+      "logit_std": 0.01023796945810318,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 0
+    },
+    {
+      "init": "normal_x0.05",
+      "logit_std": 0.0511898472905159,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 0
+    },
+    {
+      "init": "normal_x0.1",
+      "logit_std": 0.1023796945810318,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 0
+    },
+    {
+      "init": "normal_x0.25",
+      "logit_std": 0.2559492588043213,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 0
+    },
+    {
+      "init": "normal_x0.5",
+      "logit_std": 0.5118985176086426,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 0
+    },
+    {
+      "init": "normal_x1.0",
+      "logit_std": 1.0237970352172852,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 13
+    },
+    {
+      "init": "normal_x2.0",
+      "logit_std": 2.0475940704345703,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 20
+    },
+    {
+      "init": "normal_x4.0",
+      "logit_std": 4.095188140869141,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 0,
+      "zero_gradient_rows_at_temp_0.01": 30
+    },
+    {
+      "init": "normal_x8.0",
+      "logit_std": 8.190376281738281,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 5,
+      "zero_gradient_rows_at_temp_0.01": 41
+    },
+    {
+      "init": "normal_x16.0",
+      "logit_std": 16.380752563476562,
+      "zero_gradient_rows_at_temp_1.0": 0,
+      "zero_gradient_rows_at_temp_0.1": 18,
+      "zero_gradient_rows_at_temp_0.01": 44
+    }
+  ],
+  "note": "Saturation is a property of the schedule, not of a backend; it reproduces on CPU and bounds the usable initialization scale."
+}

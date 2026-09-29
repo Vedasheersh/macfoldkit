@@ -6,6 +6,12 @@ structure/confidence gradients, a fixed target sequence and template, binder-onl
 ProteinMPNN redesign, and independent offline Boltz2 complex predictions.
 It does not establish binding, affinity, specificity, expression or stability.
 
+> **Follow-up:** [`v2/`](v2/README.md) repeats this experiment changing exactly one
+> variable — the optimization schedule — against the same target, seed, losses and a
+> byte-identical screen. It eliminates the relaxed-to-hard gap measured here
+> (2.435 -> 0.000) and improves fold and pose reproducibility substantially, but also
+> returns 0/3. This v1 run is preserved unchanged.
+
 ## Recorded outcome
 
 **The complete workflow executed; 0/3 candidates passed the frozen screen.**

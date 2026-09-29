@@ -1,0 +1,10 @@
+version: 1
+sequences:
+  - protein:
+      id: A
+      sequence: SPAELEQFRAGLEALRRELEEDGRGRESAELWALLEAAEAEFLAAAAA
+      msa: empty
+  - protein:
+      id: B
+      sequence: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG
+      msa: empty
