@@ -214,6 +214,33 @@ def build_terms(spec, mpnn):
     return combined
 
 
+# Gradient-checkpointing policies. The AF2 Evoformer is wrapped in a bare
+# hk.remat, which recomputes the whole forward during the backward pass and costs
+# roughly one extra forward (measured backward multiplier 4.13x). hk.remat is an
+# alias of jax.checkpoint and forwards `policy`, so expensive matmul outputs can be
+# kept instead of recomputed -- a good trade on a machine with spare memory.
+REMAT_POLICIES = {
+    'default': None,
+    'dots': 'dots_saveable',
+    'dots_no_batch': 'dots_with_no_batch_dims_saveable',
+    'everything': 'everything_saveable',
+}
+
+
+def apply_remat_policy(name):
+    """Patch hk.remat to inject a checkpoint policy. Mathematically a no-op: it
+    changes only which intermediates are stored versus recomputed."""
+    if name == 'default':
+        return
+    policy = getattr(jax.checkpoint_policies, REMAT_POLICIES[name])
+    original = hk.remat
+
+    def remat_with_policy(fun, **kwargs):
+        return original(fun, **{**kwargs, 'policy': policy})
+
+    hk.remat = remat_with_policy
+
+
 BINDCRAFT_STAGES = [
     dict(name='logits_1', n_steps=50, soft_start=0.0, soft_end=0.9,
          temp_start=1.0, temp_end=1.0, hard=False),
@@ -351,6 +378,10 @@ def main():
     ap.add_argument('--optimizer', choices=['simplex_apgm', 'bindcraft'], default='simplex_apgm',
                     help='simplex_apgm reproduces the v1 single soft stage; bindcraft runs the '
                          'upstream four-stage schedule whose final stage evaluates a one-hot')
+    ap.add_argument('--remat-policy', choices=sorted(REMAT_POLICIES), default='default',
+                    help='Which intermediates the Evoformer checkpoint keeps. default\n'
+                         'recomputes everything (upstream behaviour); dots keeps matmul\n'
+                         'outputs, trading memory for less recomputation.')
     ap.add_argument('--remat', choices=['on', 'off'], default='on',
                     help='Gradient checkpointing in the Evoformer. on (default) matches every\n'
                          'published run; off uses more activation memory for less recomputation.')
@@ -385,6 +416,7 @@ def main():
         raise RuntimeError(f'Unexpected devices: {devices}')
     print('DEVICES', devices, flush=True)
     np.random.seed(args.seed)
+    apply_remat_policy(args.remat_policy)
     model = SingleAF2(args.weights, use_remat=args.remat == 'on')
     chains = [TargetChain(target_sequence, use_msa=False,
                          template_chain=target_structure[0][0])] if target else []
@@ -452,7 +484,7 @@ def main():
         compile_and_first_gradient_seconds=compile_first_s, warm_gradient_seconds=warm_s,
         # Reported at probe time so a target's feasibility on this machine is known
         # before committing to a full optimization.
-        remat=args.remat, probe_device_memory_stats=devices[0].memory_stats(),
+        remat=args.remat, remat_policy=args.remat_policy, probe_device_memory_stats=devices[0].memory_stats(),
         probe_max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         versions={n: importlib.metadata.version(n) for n in ['jax','jaxlib','jax-mps','equinox']},
         scope=('Small templated-target binder design; computational candidates only, no binding or experimental validation.'
