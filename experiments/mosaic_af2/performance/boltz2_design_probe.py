@@ -45,8 +45,16 @@ def main():
 
     UBIQUITIN = ('MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLED'
                  'GRTLSDYNIQKESTLHLVLRLRGG')
-    report = {'binder_length': binder_length, 'target_length': len(UBIQUITIN),
-              'total_length': binder_length + len(UBIQUITIN),
+    EGFR_DOMAIN_III = (
+        'RKVCNGIGIGEFKDSLSINATNIKHFKNCTSISGDLHILPVAFRGDSFTHTPPLDPQELDILKTVKEITGF'
+        'LLIQAWPENRTDLHAFENLEIIRGRTKQHGQFSLAVVSLNITSLGLRSLKEISDGDVIISGNKNLCYANTI'
+        'NWKKLFGTSGQKTKIISNRGENKCKATGQ')
+    target_name = sys.argv[5] if len(sys.argv) > 5 else 'ubiquitin'
+    TARGET = {'ubiquitin': UBIQUITIN, 'egfr': EGFR_DOMAIN_III}[target_name]
+    # NOTE: peak_bytes_in_use is a process-lifetime high-water mark. Run ONE config per
+    # process when the memory figure matters, or it accumulates across compilations.
+    report = {'binder_length': binder_length, 'target': target_name, 'target_length': len(TARGET),
+              'total_length': binder_length + len(TARGET),
               'device': str(jax.devices()[0]), 'runs': []}
 
     start = time.perf_counter()
@@ -56,7 +64,7 @@ def main():
 
     start = time.perf_counter()
     features, _writer = Boltz2.binder_features(
-        binder_length, [TargetChain(UBIQUITIN, use_msa=False)])
+        binder_length, [TargetChain(TARGET, use_msa=False)])
     report['feature_seconds'] = time.perf_counter() - start
     print('features in %.1f s' % report['feature_seconds'], flush=True)
 
@@ -84,6 +92,12 @@ def main():
             stats = jax.devices()[0].memory_stats()   # None on the CPU backend
             if stats:
                 row['peak_gb'] = stats['peak_bytes_in_use'] / 1e9
+                # Record every field: peak_bytes_in_use exceeding bytes_limit would be
+                # internally inconsistent, so the raw dict is needed to interpret it.
+                row['device_memory_stats'] = {k: v for k, v in stats.items()}
+            import resource
+            row['process_peak_rss_gb'] = (
+                resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e9)
         except Exception as error:
             row['error'] = f'{type(error).__name__}: {str(error)[:220]}'
         report['runs'].append(row)

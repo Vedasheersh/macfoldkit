@@ -100,25 +100,49 @@ marginal cost is 0.083 s per sampling step; going from 1 to 25 steps adds only 2
 10.74 s total. The implied trunk-and-fixed cost is 8.67 s, about 81% of the step. Reducing
 `sampling_steps` is therefore *not* the affordability lever it looked like.
 
-### Two real problems
+### Memory: there is no problem to optimize. The 44.4 GB was a measurement artifact
 
-**1. Memory.** The reported peak is 44.4 GB against a 24.48 GB device limit. It is identical
-at 5 and 25 sampling steps, which suggests it may be an allocator high-water mark rather
-than live residency, so the figure needs interpreting before it is quoted as a hard number —
-process RSS was not recorded and should be. Either way it is an order of magnitude above
-AF2's 2.66 GB and is the thing most likely to prevent a real campaign, especially at EGFR
-scale where AF2 already reaches 5.42 GB.
+An earlier revision of this document reported a 44.4 GB peak against a 24.48 GB device
+limit and called it the likely campaign blocker. That figure was wrong, and the tell was
+already visible: it was byte-identical at 5 and 25 sampling steps and exceeded the device
+limit, which is internally impossible.
 
-**2. A jax-mps backend bug at `sampling_steps=1`:**
+The cause was the sweep running `sampling_steps` 1, 5 and 25 **in one process**.
+`peak_bytes_in_use` is a process-lifetime high-water mark, so it accumulated across a failed
+run and three separate compilations. Measured one config per process:
 
-```
-JaxRuntimeError: INTERNAL: Output count mismatch: expected 5, got 0
-  (eval: svd_impl: sgesvdx_ failed with code -4)
-```
+| config | tokens | atoms | sampling_steps | warm gradient | device peak | pool bytes |
+|---|---|---|---|---|---|---|
+| ubiquitin + 48-mer | 124 | 864 | 5 | 2.91 s | **5.25 GB** | 10.21 GB |
+| ubiquitin + 48-mer | 124 | 864 | 25 | 3.57 s | **5.25 GB** | 10.21 GB |
+| EGFR domain III + 60-mer | 231 | — | 25 | 12.92 s | **10.17 GB** | 18.10 GB |
+| EGFR domain III + 150-mer | 321 | — | 25 | 30.41 s | **18.30 GB** | 18.10 GB |
 
-An SVD in the MLX/MPS backend fails with a LAPACK illegal-argument code. It affects only
-`sampling_steps=1`; 5 and 25 both run. This is a backend defect, not a Boltz2 or Mosaic one,
-and is worth reporting upstream.
+Device limit 24.48 GB. AF2 for comparison: 2.66 GB at 124 tokens, 5.42 GB at 231.
+
+Boltz2 design costs roughly **2x AF2's memory and 1.4x its time**, and fits comfortably at
+both ubiquitin and EGFR scale. Nothing needs optimizing at the sizes that matter.
+
+**`sampling_steps` has no effect on memory at all** — 5.25 GB at both 5 and 25. Joltz runs
+the diffusion loop as a `jax.lax.scan` under `@jax.checkpoint`, so activations do not
+accumulate across sampling steps. Joltz already applies `@jax.checkpoint` at ten or more
+sites, and `boltz2_trunk` wraps each recycling iteration in `jax.lax.stop_gradient`. The
+obvious memory levers are already pulled.
+
+### Where the real ceiling is, and it is time not memory
+
+Memory scales about `N^1.7` in tokens (231 -> 321 tokens, a 1.39x increase, took 10.17 ->
+18.30 GB, 1.80x). Extrapolating to the 24.48 GB limit puts the memory ceiling near **370
+tokens**.
+
+Time scales worse, about `N^2.6` (12.92 -> 30.41 s over the same range). At 321 tokens a
+single gradient step is 30.41 s, so a 125-step design is **about 63 minutes**. Time becomes
+prohibitive well before memory does, and the performance study in [README.md](README.md)
+found no backend headroom to recover — all three backends sit at the same roofline.
+
+So the practical envelope for Boltz2 design on this machine is roughly **up to EGFR scale**:
+231 tokens at 12.92 s/step is about 27 minutes for a 125-step design, against 19 minutes for
+AF2. Beyond ~300 tokens it stops being sensible on time grounds, not memory grounds.
 
 ## The estimate that this superseded
 
