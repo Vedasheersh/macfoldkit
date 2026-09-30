@@ -176,6 +176,54 @@ What was actually needed, all of it outside the checkout:
 and issues zero subprocess calls — verified by instrumenting `subprocess.run` during import,
 not inferred from reading imports.
 
+### Runtime: subbatching attention is a free 5x
+
+The first trajectory ran at 42.9 s per gradient round (measured marginally, 8 rounds vs 24,
+with compilation only 20 s of it), which puts the default 125 gradient + 15 mutation budget
+near 100 minutes. Mosaic's AF2 gradient at a comparable size is 2.08 s, so BindCraft2 was
+roughly 20x slower for the same model on the same backend.
+
+Ruled out by measurement, not assumption: MSA depth (both feed depth 1 -- af2.py:133 builds
+`msa_feat` as `(1, length, 49)` and `num_extra_msa` is 1), gradient checkpointing (af2.py:251
+already sets `use_remat = True`, and both projects run the 48 blocks the same way, via
+`layer_stack(48)` wrapping `hk.remat(evoformer_fn)`), design model count (pinned to 1 and
+confirmed by `design_model_count()`), length bucketing (af2.py:56 pads the *design* chain
+only, so a 60-mer becomes 64 and the target is untouched), recycling (`design_recycles: 0`
+gives 1.04x) and dropout (`design_dropout: false` gives 1.00x).
+
+The cause is memory. Scanning binder length at a fixed 76-residue target:
+
+| binder | padded complex | s / round | device peak | under the 24.48 GB limit? |
+|---|---|---|---|---|
+| 20 | 108 | **5.3** | 16.68 GB | yes |
+| 40 | 140 | 36.2 | 27.85 GB | **no** |
+| 60 | 140 | 46.9 | 27.85 GB | **no** |
+
+(40 and 60 pad to the same 64-residue binder, which is why their memory is identical.) The
+apparent scaling exponent of 6.2 is not algorithmic -- it is the cliff of falling out of
+unified memory and swapping.
+
+`resolve_subbatch_size` (af2.py:203-206) returns `None` below 384 residues, so AF2's
+attention is never chunked at the sizes a binder trajectory actually uses. Passing an
+explicit `subbatch_size` chunks it:
+
+| subbatch_size | s / round | device peak | speedup |
+|---|---|---|---|
+| `auto` (no chunking) | 46.9 | 27.85 GB | 1.00x |
+| **64** | **9.4** | **15.23 GB** | **5.00x** |
+| 32 | 9.2 | 15.29 GB | 5.08x |
+
+**The designed sequence is byte-identical across all three.** Chunked and stock attention
+already agreed to 3.7e-9 in the earlier CPU audit, so this is the same computation; getting
+back under the memory ceiling is pure win. A full 125+15 round trajectory drops from roughly
+100 minutes to about 22.
+
+`run_trajectory_mac.py --subbatch 64` sets it. This is a Mac-specific default worth reporting
+upstream alongside the bfloat16 finding: BindCraft2's 384-residue threshold is presumably
+tuned for GPUs with more memory than 24 GiB of shared unified memory.
+
+### What is still not established
+
 ### What is still not established
 
 ### What is still not established

@@ -25,6 +25,7 @@ probe runner built in `__init__` and leaves any later one in bfloat16.
 """
 import argparse
 import json
+import resource
 import time
 from pathlib import Path
 
@@ -78,6 +79,11 @@ def main():
     parser.add_argument('--preset', default='model_1_multimer_v3',
                         help='single AF2 preset; the full pool costs ~1.9 GB of parameters')
     parser.add_argument('--seed', type=int, default=7)
+    parser.add_argument('--subbatch', default=None,
+                        help="AF2 attention subbatch size. BindCraft2's resolve_subbatch_size "
+                             'returns None below 384 residues, so attention is never chunked '
+                             'and peak memory exceeds 24 GiB at ~140 residues. An explicit '
+                             'integer chunks it.')
     parser.add_argument('--report', default=None, help='where to write the JSON run record')
     args = parser.parse_args()
 
@@ -95,7 +101,7 @@ def main():
         'jax': jax.__version__,
         'patch': patched,
         'preset': args.preset,
-        'seed': args.seed,
+        'seed': args.seed, 'subbatch_size': args.subbatch or 'auto',
         'stage_rounds': rounds,
         'gradient_rounds': sum(v for k, v in rounds.items() if k != 'mutate'),
         'binder_lengths': list(design_settings.binder.lengths),
@@ -110,7 +116,9 @@ def main():
         presets=(args.preset,), models=(args.preset,), data_dir=args.data_dir,
         key=jax.random.PRNGKey(args.seed), num_recycle=int(settings.get('design_recycles', 1)),
         dropout=bool(settings.get('design_dropout', True)),
-        attention_backend='auto', use_cueq=False)
+        attention_backend='auto', use_cueq=False,
+        subbatch_size=(int(args.subbatch) if args.subbatch not in (None, 'auto')
+                       else 'auto'))
     record['model_load_seconds'] = time.perf_counter() - start
     print('model loaded in %.1f s' % record['model_load_seconds'], flush=True)
 
@@ -120,6 +128,13 @@ def main():
         design_settings, model, jax.random.PRNGKey(args.seed),
         trajectory_directory=args.out)
     record['trajectory_seconds'] = time.perf_counter() - start
+    record['process_peak_rss_gb'] = (
+        resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e9)
+    stats = jax.devices()[0].memory_stats()
+    if stats:
+        record['device_peak_gb'] = stats['peak_bytes_in_use'] / 1e9
+        record['device_limit_gb'] = stats.get('bytes_limit', 0) / 1e9
+        record['device_pool_gb'] = stats.get('pool_bytes', 0) / 1e9
     record['failure'] = failure
     record['sequences'] = designed_sequences(
         protein_states, settings.get('target_chain', 'target'))
