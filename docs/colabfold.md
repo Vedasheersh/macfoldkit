@@ -33,6 +33,8 @@ proof of GPU compatibility. Do not apply it to an existing ColabFold environment
 
 The package does not redistribute model weights. ColabFold's own downloader
 fetches absent weights from their original provider when prediction starts.
+The optional [local job queue](jobs.md) instead requires cached weights before
+submission and prevents any model download or MMseqs2 search during execution.
 For an explicit download stage, its Python API is:
 
 ```python
@@ -76,9 +78,62 @@ three recycles, seed 7, no relaxation, and maximum MSA `1:1` for single-sequence
 mode or `128:256` otherwise. Override those settings explicitly as needed.
 `--zip` is unsupported because output verification requires the exported PDBs.
 
+## Local templates and initial guesses
+
+For two domains joined by a linker in **one polypeptide**, submit one
+continuous FASTA sequence (`domain 1 + linker + domain 2`), not two chains
+separated by `:`. ColabFold can align separate local domain structures to
+different parts of that sequence. Put **copies** of their PDBs in a writable
+directory, with four-character alphanumeric, PDB-ID-like basenames such as
+`1abc.pdb` and `2def.pdb`:
+
+```bash
+mkdir -p templates
+cp domain1.pdb templates/1abc.pdb
+cp domain2.pdb templates/2def.pdb
+macfoldkit fold construct.fasta results --backend colabfold -- \
+  --local-only --msa-mode single_sequence --templates \
+  --custom-template-path templates --max-msa 5:1
+```
+
+This uses local HHsearch and cached weights without an MSA search or remote
+template-service request. `--templates` **without** `--custom-template-path`
+can query an external template service; `--local-only` makes an attempted
+MMseqs2 search or weight download fail. ColabFold converts PDBs to CIF and
+builds `pdb70*` index files in the supplied template directory; do not point
+it at irreplaceable originals. Check `results/*_template_domain_names.json`
+to see which structures actually matched. In this pinned build, the normal `1:1`
+single-sequence MSA default fails during feature preparation when templates
+are enabled; pass `--max-msa 5:1` as above. For a complete local A3M, use
+`--msa-mode mmseqs2_uniref_env` instead to preserve its rows, together with
+`--local-only` and a local template directory.
+
+An **initial guess** is different: it seeds the model's starting coordinates
+from **one full-length** `.pdb` or `.cif` containing the entire construct in
+the same residue order as the query, including the linker. It does not
+automatically join two domain PDBs or fill in missing linker coordinates:
+
+```bash
+macfoldkit fold construct.fasta guess-results --backend colabfold -- \
+  --local-only --initial-guess assembled.pdb
+```
+
+You can add `--initial-guess assembled.pdb` to the local-template command to
+use **both** in one run. An initial guess is not a coordinate restraint;
+neither it nor two separate domain templates determines the domains' relative
+orientation across a flexible linker. Examine interdomain PAE and alternative
+predictions rather than treating one pose as established. These flags are
+available through the standalone `fold` command, **not** the [local jobs
+queue](jobs.md).
+
+## Outputs
+
 Each output directory includes `process.log`, `benchmark.json`, and
 `model-device-audit.jsonl`. Reusing an output directory containing predictions
 requires the explicit upstream `--overwrite-existing-results` option.
+Queued runs place these under a per-job, per-attempt output directory; the
+[queue input/output contract](jobs.md#input-contract) defines its accepted
+formats, job JSON, and artifact paths.
 
 ## Validation scope
 

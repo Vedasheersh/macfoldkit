@@ -10,6 +10,7 @@ import sys
 from . import __version__
 from .config import BACKENDS, PACKAGE, cache_home, runtime_env, runtime_python, supported_platform
 from .install import setup
+from . import jobs
 
 
 def require_runtime(home, backend):
@@ -52,11 +53,15 @@ def main(argv=None):
     design.add_argument("--steps", type=int, default=25)
     design.add_argument("--seed", type=int, default=7)
     design.add_argument("--device", choices=("mps", "cpu"), default="mps")
+    jobs.add_arguments(sub.add_parser("jobs", help="Local persistent ColabFold folding queue"))
     args, extra = parser.parse_known_args(argv)
     if args.command != "fold" and extra:
         parser.error("unrecognized arguments: " + " ".join(extra))
     home = cache_home(args.home)
     try:
+        if args.command == "jobs":
+            jobs.run_command(args, home)
+            return 0
         if args.command == "doctor":
             return doctor(home)
         if args.command == "setup":
@@ -64,7 +69,7 @@ def main(argv=None):
             return 0
         if args.command == "fetch":
             python = require_runtime(home, args.backend)
-            command = [str(python), str(PACKAGE / "runners/fetch_assets.py"), args.backend,
+            command = [str(python), "-P", str(PACKAGE / "runners/fetch_assets.py"), args.backend,
                        "--model-type", args.model_type]
             return subprocess.run(command, env=runtime_env(home, args.backend)).returncode
         if args.command == "fold":
@@ -84,7 +89,7 @@ def main(argv=None):
             command = [str(python), str(PACKAGE / "runners/mosaic/design.py"), "--structure", args.structure,
                        "--output", args.output, "--platform", args.device, "--steps", str(args.steps), "--seed", str(args.seed)]
         return subprocess.run(command, env=env).returncode
-    except (RuntimeError, OSError, subprocess.CalledProcessError) as exc:
+    except (RuntimeError, ValueError, OSError, subprocess.CalledProcessError) as exc:
         print(f"macfoldkit: {exc}", file=sys.stderr)
         return 1
 

@@ -83,6 +83,19 @@ See [ColabFold details](docs/colabfold.md). The Boltz `--offline` flag is not a
 ColabFold option; cached weights plus local A3M/single-sequence inputs avoid MSA
 requests, but this wrapper does not implement a blanket network prohibition.
 
+## Local folding queue
+
+To let other local agents or Terminal sessions submit folds without waiting,
+install this checkout as a persistent tool, then run `macfoldkit jobs install`.
+`macfoldkit jobs submit sequence.fasta` queues one ColabFold fold, while
+`macfoldkit jobs status JOB_ID` and `macfoldkit jobs logs JOB_ID` inspect its
+result. The per-user launchd worker runs one MPS job at a time and resumes pending
+jobs at login. Unlike the standalone `fold` command, queued jobs prohibit MSA
+search and weight downloads: use a single FASTA or complete local A3M with
+previously fetched weights. Jobs and outputs persist outside the system cache
+until explicitly deleted. See [local jobs](docs/jobs.md) for the input/output
+contract, setup, cancellation, retry and battery behavior.
+
 ## Experimental fixed-backbone design
 
 ```bash

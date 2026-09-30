@@ -9,6 +9,7 @@ import shutil
 import tarfile
 import tempfile
 import urllib.request
+from urllib.parse import urlsplit
 
 MOLS_URL = "https://huggingface.co/boltz-community/boltz-2/resolve/6fdef46d763fee7fbb83ca5501ccceff43b85607/mols.tar"
 MOLS_SHA256 = "39e076d96dbec6b4e86982bbda16f3a53a2a60c9bdc17828d88f6f9a0c7d1fd7"
@@ -28,8 +29,22 @@ def download_verified(url, destination, expected):
     fd, name = tempfile.mkstemp(dir=destination.parent, prefix=destination.name + ".")
     temporary = Path(name)
     try:
-        with os.fdopen(fd, "wb") as output, urllib.request.urlopen(url, timeout=120) as response:
-            shutil.copyfileobj(response, output)
+        with os.fdopen(fd, "wb") as output:
+            endpoint = os.environ.get("HF_ENDPOINT")
+            if endpoint and urlsplit(url).hostname == "huggingface.co":
+                if urlsplit(endpoint).scheme != "https":
+                    raise ValueError("HF_ENDPOINT must use HTTPS for authenticated asset downloads")
+                from huggingface_hub import hf_hub_download
+                owner, repo, resolve, revision, filename = urlsplit(url).path.strip("/").split("/", 4)
+                if resolve != "resolve":
+                    raise ValueError(f"Unexpected Hugging Face asset URL: {url}")
+                cached = hf_hub_download(repo_id=f"{owner}/{repo}", revision=revision,
+                                         filename=filename, endpoint=endpoint)
+                with open(cached, "rb") as response:
+                    shutil.copyfileobj(response, output)
+            else:
+                with urllib.request.urlopen(url, timeout=120) as response:
+                    shutil.copyfileobj(response, output)
         if sha256(temporary) != expected:
             raise RuntimeError(f"Asset checksum mismatch: {url}")
         temporary.replace(destination)

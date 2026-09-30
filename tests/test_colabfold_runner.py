@@ -4,7 +4,9 @@ import io
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
+from types import ModuleType
 import unittest
 from unittest.mock import patch
 
@@ -77,6 +79,47 @@ class ColabFoldRunnerTests(unittest.TestCase):
                 with self.assertRaises(SystemExit):
                     runner.main()
             self.assertFalse(output.exists())
+
+    def test_local_only_flag_reaches_worker_and_prevents_downloads(self):
+        observed = self.run_fake_prediction(("--local-only",))
+        self.assertEqual(observed["env"]["MACFOLDKIT_COLABFOLD_LOCAL_ONLY"], "1")
+        self.assertNotIn("--local-only", observed["command"])
+
+    def test_local_only_worker_blocks_search_and_requires_cached_weights(self):
+        with tempfile.TemporaryDirectory() as directory:
+            data = Path(directory)
+            params = data / "params"
+            params.mkdir()
+            (params / "params_model_1_ptm.npz").write_bytes(b"cached")
+            jax = ModuleType("jax")
+            jax.default_backend = lambda: "mps"
+            model = ModuleType("alphafold.model.model")
+            model.RunModel = type("RunModel", (), {})
+            alphafold = ModuleType("alphafold")
+            alphafold_model = ModuleType("alphafold.model")
+            colabfold = ModuleType("colabfold")
+            colabfold_api = ModuleType("colabfold.colabfold")
+            download = ModuleType("colabfold.download")
+            batch = ModuleType("colabfold.batch")
+
+            def verify():
+                with self.assertRaisesRegex(RuntimeError, "cannot submit sequences"):
+                    colabfold_api.run_mmseqs2("SECRET")
+                download.download_alphafold_params("alphafold2_ptm", data)
+                with self.assertRaisesRegex(RuntimeError, "previously fetched"):
+                    download.download_alphafold_params("alphafold2_multimer_v3", data)
+
+            batch.main = verify
+            colabfold.colabfold = colabfold_api
+            colabfold.download = download
+            modules = {"jax": jax, "alphafold": alphafold, "alphafold.model": alphafold_model,
+                       "alphafold.model.model": model, "colabfold": colabfold,
+                       "colabfold.colabfold": colabfold_api, "colabfold.download": download,
+                       "colabfold.batch": batch}
+            with patch.dict(sys.modules, modules), \
+                 patch.dict(os.environ, {"MACFOLDKIT_COLABFOLD_LOCAL_ONLY": "1",
+                                         "COLABFOLD_DEVICE_AUDIT_PATH": str(data / "audit")}):
+                runner.worker()
 
 
 if __name__ == "__main__":

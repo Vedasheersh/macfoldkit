@@ -38,6 +38,14 @@ class CliTests(unittest.TestCase):
         self.assertEqual(run.call_args.kwargs["env"]["HF_HUB_OFFLINE"], "1")
         self.assertIn("--offline", run.call_args.args[0])
 
+    def test_fetch_does_not_shadow_installed_colabfold_package(self):
+        with patch.object(cli, "require_runtime", return_value=Path("/tmp/python")), \
+             patch.object(cli.subprocess, "run", return_value=Mock(returncode=0)) as run:
+            self.assertEqual(cli.main(["fetch", "colabfold", "--model-type", "alphafold2_multimer_v3"]), 0)
+        self.assertEqual(run.call_args.args[0][0:2], ["/tmp/python", "-P"])
+        self.assertTrue(run.call_args.args[0][2].endswith("runners/fetch_assets.py"))
+        self.assertEqual(run.call_args.args[0][3:], ["colabfold", "--model-type", "alphafold2_multimer_v3"])
+
     def test_unknown_setup_argument_rejected(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             cli.main(["setup", "mosaic", "--bogus"])

@@ -23,6 +23,22 @@ def worker(optimized_batching: bool = False) -> None:
     if optimized_batching:
         from mac_batching import install
         install()
+    if os.environ.get("MACFOLDKIT_COLABFOLD_LOCAL_ONLY") == "1":
+        from colabfold import colabfold, download
+
+        def forbid_search(*_args, **_kwargs):
+            raise RuntimeError("Queued jobs cannot submit sequences to MMseqs2 or template services")
+
+        def require_cached_weights(model_type, data_dir):
+            suffix = {"alphafold2_ptm": "_ptm", "alphafold2_multimer_v3": "_multimer_v3"}.get(model_type)
+            if suffix is None:
+                raise RuntimeError(f"Queued jobs do not support model type {model_type}")
+            path = Path(data_dir) / "params" / f"params_model_1{suffix}.npz"
+            if not path.is_file() or path.stat().st_size == 0:
+                raise RuntimeError(f"Queued jobs require previously fetched model weights: {path}")
+
+        colabfold.run_mmseqs2 = forbid_search
+        download.download_alphafold_params = require_cached_weights
     audit_path = Path(os.environ["COLABFOLD_DEVICE_AUDIT_PATH"])
     original_init = RunModel.__init__
     model_counter = 0
@@ -93,6 +109,7 @@ def main() -> None:
     parser.add_argument("--async-dispatch", action="store_true", help="Enable the jax-mps asynchronous-dispatch experiment; off by default.")
     parser.add_argument("--no-optimized-batching", action="store_true", help="Use the original four-row batching policy instead of the validated Mac policy.")
     parser.add_argument("--data", type=Path, default=home / "weights/colabfold")
+    parser.add_argument("--local-only", action="store_true", help="Forbid MMseqs2 and model downloads; used by the job queue.")
     args, extra = parser.parse_known_args()
     if any(option == "--zip" or option.startswith("--zip=") for option in extra):
         parser.error("--zip is unsupported: GPU result verification requires the exported PDB files.")
@@ -116,6 +133,8 @@ def main() -> None:
                COLABFOLD_DEVICE_AUDIT_PATH=str(audit_path),
                COLABFOLD_OPTIMIZED_BATCHING="0" if args.no_optimized_batching else "1",
                JAX_MPS_ASYNC_DISPATCH="1" if args.async_dispatch else "0")
+    if args.local_only:
+        env["MACFOLDKIT_COLABFOLD_LOCAL_ONLY"] = "1"
     env.setdefault("MPLCONFIGDIR", str(home / "cache/matplotlib"))
     env.setdefault("XDG_CACHE_HOME", str(home / "cache"))
     started = time.perf_counter()

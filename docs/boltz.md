@@ -75,6 +75,10 @@ FastPLMs additionally needs `biohub/ESMFold2`'s `ccd.pkl` at revision
 `9ff44b1927c6b9198e38ffe0928706827a09a350c15530beeeabebfa88038fc5`.
 The CCD is verified before deserialization. A regular file supplied through
 `ESMCFOLD_CCD_PATH` avoids incompatibility with shared Hugging Face blob symlinks.
+For an authenticated Hugging Face mirror, set `HF_ENDPOINT` (HTTPS) and `HF_TOKEN`
+when fetching; the chemistry assets follow that endpoint and retain their
+checksum checks. The mirror must also contain the pinned `Synthyra/Boltz2` model
+for the folding runner. Credentials are not stored by MacFoldKit.
 
 ## Validation boundaries
 
