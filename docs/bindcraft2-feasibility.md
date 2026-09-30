@@ -128,6 +128,56 @@ hazard on MPS either. A counterfactual gradient through `ProteinFeatures` agrees
 `loss.py:412`'s `jax.lax.stop_gradient(jnp.argsort(...))` was re-verified. There is no
 sort-shaped gradient exposure left in BindCraft2.
 
+### A full trajectory now runs on Apple Silicon
+
+`run_trajectory` (trajectory.py:278), BindCraft2's real four-stage design machine, completed
+on MPS. Driver, launcher and settings are in `experiments/bindcraft2/`
+(`run_trajectory_mac.py`, `run-mac.sh`, `settings-ubiquitin-smoke.json`); the checkout is
+still untouched and nothing is vendored.
+
+Target ubiquitin (76 residues, chain A), de novo binder of 60, one AF2 preset
+(`model_1_multimer_v3`), seed 7:
+
+| | |
+|---|---|
+| device | MPS:0 |
+| stages completed | screen, refine, anneal, harden — all four, `failure: None` |
+| gradient rounds | 8 (3/2/2/1), against the default 125 |
+| model load | 0.2 s |
+| trajectory | 362.8 s |
+| i_pTM over the run | 0.08 -> 0.13 |
+| output | a 60-residue binder plus a per-round loss table |
+
+**This is a plumbing result, not a design result.** Eight rounds is about 6% of the default
+budget and every stage gate was nulled so nothing could abort, so the sequence it produced
+means nothing. What it establishes is that the pipeline executes: settings parsing, target
+preparation, the four optimiser stages, the loss registry, per-round recording and sequence
+readout all work on this backend.
+
+What was actually needed, all of it outside the checkout:
+
+- **matplotlib.** `trajectory.py:8` imports `TrajectoryRecorder`, and
+  `trajectory_output.py:12` imports matplotlib at module level, unguarded. Without it
+  `import bindcraft.trajectory` fails before anything runs. Installed to a side directory;
+  `MPLCONFIGDIR` is pointed at scratch so the font cache does not land in `$HOME`.
+- **float32.** `_alphafold_runner` (af2.py:243-259) sets `bfloat16 = True` on a fresh
+  deepcopy of the config, so there is nothing upstream to override. The driver wraps that
+  method. Wrapping matters rather than mutating runners afterwards: runners are cached on
+  `(model_family, subbatch_size, attention_backend, use_cueq)` (af2.py:62) and created
+  lazily, so a post-hoc walk over `alphafold_runners` catches only the small probe runner
+  built in `__init__` and leaves later ones in bfloat16.
+- **`binder_lengths`** has no default and raises if omitted.
+- **`min_iptm_final: 0.0`, never `null`.** settings.py:480-482 guards on key presence rather
+  than on the value, so null reaches `float()` and raises.
+- **One preset.** The full design pool loads roughly 1.9 GB of parameters.
+
+**No CUDA bypass was needed.** Importing `bindcraft.trajectory`, `af2`, `protein` and
+`settings` pulls in none of `cli.py`, `design_workers.py`, `selfcheck.py` or `preflight.py`,
+and issues zero subprocess calls — verified by instrumenting `subprocess.run` during import,
+not inferred from reading imports.
+
+### What is still not established
+
 ### What is still not established
 
 - **No AF2 gradient meets the 0.5% gate on MPS.** Only the forward does, and only in float32.
