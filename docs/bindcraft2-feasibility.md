@@ -222,6 +222,40 @@ back under the memory ceiling is pure win. A full 125+15 round trajectory drops 
 upstream alongside the bfloat16 finding: BindCraft2's 384-residue threshold is presumably
 tuned for GPUs with more memory than 24 GiB of shared unified memory.
 
+### A full-budget trajectory with the real gates: 13 minutes, and it failed honestly
+
+Settings with no `*_steps` and no `min_*` overrides, so BindCraft2's own budget and its own
+stage gates apply, plus `--subbatch 64`. Target ubiquitin chain A, 60-residue de novo binder,
+one design model, seed 7. `settings-ubiquitin-full.json`, results in
+`trajectory-full-report.json` and `trajectory-full-losses.csv`.
+
+| stage | rounds | i_pTM start -> end | best | gate | outcome |
+|---|---|---|---|---|---|
+| screen | 50 | 0.08 -> 0.14 | 0.20 | pLDDT 0.60 | passed, pLDDT 0.80 |
+| refine | 25 | 0.11 -> 0.16 | 0.19 | pLDDT 0.60 | passed, pLDDT 0.79 |
+| anneal | 45 | 0.12 -> 0.14 | 0.24 | i_pTM 0.50 | **failed** |
+| harden | 5 | — | — | — | not reached |
+| mutate | 15 | — | — | — | not reached |
+
+120 of 140 rounds in 678.3 s, i.e. **5.7 s per round and 11.3 minutes**, at 15.24 GB of the
+24.48 GB limit. A trajectory that completes all 140 rounds is about **13 minutes** — compile
+amortises further over a longer run than the 9.4 s/round measured from two rounds.
+
+**The trajectory failed, and that is the correct outcome to report.** i_pTM never exceeded
+0.24 against the 0.50 the anneal stage requires, so BindCraft2's own quality gate rejected
+the design and stopped. The pipeline is faithful including its rejection behaviour, which is
+more reassuring than a pass would have been at this stage. The sequence it reached,
+`GAKRRMRMYQKRSQKAWWMHQNAPRNMRRGERRRFRNRAYRMFERYWPMAWKEFEMMENG`, is conspicuously
+arginine-rich — the charge-driven non-specific-binder failure mode.
+
+Nothing about design quality follows from this. It is one trajectory; BindCraft2's defaults
+assume `max_trajectories` in the thousands and keep the few that survive. It also ran with
+`design_models=1` rather than the 5-model pool, against a promiscuous hub protein, with no
+epitope hotspots specified. What it establishes is that the machinery, the budget and the
+gates all work on Apple Silicon at a usable speed.
+
+### What is still not established
+
 ### What is still not established
 
 ### What is still not established
