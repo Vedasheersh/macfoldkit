@@ -1,0 +1,31 @@
+{
+  "binder_length": 48,
+  "target_length": 76,
+  "total_length": 124,
+  "device": "cpu:0",
+  "runs": [
+    {
+      "sampling_steps": 1,
+      "compile_and_first_seconds": 12.164235707983607,
+      "warm_gradient_seconds": 8.74839658298879,
+      "loss": -0.6196128129959106,
+      "gradient_finite": true
+    },
+    {
+      "sampling_steps": 5,
+      "compile_and_first_seconds": 11.869541708001634,
+      "warm_gradient_seconds": 9.023306417017011,
+      "loss": -0.6196128129959106,
+      "gradient_finite": true
+    },
+    {
+      "sampling_steps": 25,
+      "compile_and_first_seconds": 13.424498542008223,
+      "warm_gradient_seconds": 10.742933375004213,
+      "loss": -0.6196128129959106,
+      "gradient_finite": true
+    }
+  ],
+  "load_seconds": 9.951669458008837,
+  "feature_seconds": 0.4694743329891935
+}

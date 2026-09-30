@@ -1,0 +1,34 @@
+{
+  "device": "MPS:0",
+  "jax": "0.11.2",
+  "patch": "AlphaFoldDesignModel._alphafold_runner wrapped: bfloat16 and bfloat16_output False",
+  "preset": "model_1_multimer_v3",
+  "seed": 7,
+  "stage_rounds": {
+    "screen": 3,
+    "refine": 2,
+    "anneal": 2,
+    "harden": 1,
+    "mutate": 0
+  },
+  "gradient_rounds": 8,
+  "binder_lengths": [
+    60
+  ],
+  "targets": [
+    {
+      "name": "ubiquitin",
+      "path": "/Users/vsb/Documents/Codex/2026-09-26/can/outputs/macfoldkit/experiments/mosaic_af2/ubiquitin/ubiquitin-target.cif",
+      "chains": "A"
+    }
+  ],
+  "model_load_seconds": 0.1932401249941904,
+  "trajectory_seconds": 362.78521950001596,
+  "failure": null,
+  "sequences": {
+    "ubiquitin/binder": "NNDWVFMKVNYMYKMVEFENMFLTLYLGYGPRDDKGELAIYNKEGGSQLKMNMFELMKLY"
+  },
+  "prediction_states": [
+    "ubiquitin"
+  ]
+}

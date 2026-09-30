@@ -1,0 +1,8 @@
+{
+  "backend": "jax-mps",
+  "version": "0.11.2",
+  "device": "MPS:0",
+  "jit_seconds": 0.0004207919992040843,
+  "eager_seconds": 0.002242417016532272,
+  "tensor_mb": 7.872512
+}

@@ -1,0 +1,184 @@
+{
+  "raw": {
+    "relative_l2": 0.0014914408625484278,
+    "cosine": 0.9999988889876696,
+    "max_absolute_error": 0.0013315677642822266
+  },
+  "simplex_tangent": {
+    "relative_l2": 0.0016276591692932975,
+    "cosine": 0.9999986757557754,
+    "max_absolute_error": 0.0014023616211488732
+  },
+  "loss_absolute_error": 1.430511474609375e-06,
+  "relative_tolerance": 0.005,
+  "loss_tolerance": 0.0001,
+  "cpu": {
+    "platform": "cpu",
+    "length": 64,
+    "seed": 7,
+    "objective_seed": 7,
+    "target": null,
+    "total_length": 64,
+    "chain_order": [
+      "binder_A"
+    ],
+    "feature_sha256": "9edd4886ba5520e6f273c38ab58821a138f8eb100f5aa8497e21c0b205363956",
+    "loss_terms": [
+      {
+        "type": "PLDDTLoss",
+        "weight": 1.0
+      },
+      {
+        "type": "WithinBinderPAE",
+        "weight": 0.05
+      },
+      {
+        "type": "WithinBinderContact",
+        "weight": 1.0,
+        "num_contacts_per_residue": 8,
+        "max_contact_distance": 14.0,
+        "min_sequence_separation": 8
+      },
+      {
+        "type": "DistogramRadiusOfGyration",
+        "weight": 0.1
+      },
+      {
+        "type": "HelixLoss",
+        "weight": 0.3
+      },
+      {
+        "type": "InverseFoldingSequenceRecovery",
+        "weight": 5.0,
+        "temp": 0.1,
+        "num_samples": 4,
+        "jacobi_iterations": 10
+      }
+    ],
+    "protocol_sha256": null,
+    "contact_loss_implementation": "metal_losses.py: equivalent contact reduction",
+    "model": "model_1_multimer_v3",
+    "precision": "float32",
+    "forward_passes": 1,
+    "initial_loss": 5.534089088439941,
+    "initial_aux": [
+      {
+        "plddt": 0.5845228433609009
+      },
+      {
+        "bb_pae": 15.789711952209473
+      },
+      {
+        "intra_contact": -4.989673614501953
+      },
+      {
+        "radius_of_gyration": 18.427745819091797
+      },
+      {
+        "helix": -0.528200626373291
+      },
+      {
+        "sequence_recovery": 0.05177101492881775
+      }
+    ],
+    "gradient_devices": [
+      "cpu:0"
+    ],
+    "mpnn_weight": 5.0,
+    "mpnn_samples": 4,
+    "compile_and_first_gradient_seconds": 9.507266458007507,
+    "warm_gradient_seconds": 1.860120333993109,
+    "versions": {
+      "jax": "0.11.2",
+      "jaxlib": "0.11.2",
+      "jax-mps": "0.11.0",
+      "equinox": "0.13.8"
+    },
+    "scope": "Small de novo monomer, full AF2 confidence/structure gradients; not binder design or experimental validation."
+  },
+  "mps": {
+    "platform": "mps",
+    "length": 64,
+    "seed": 7,
+    "objective_seed": 7,
+    "target": null,
+    "total_length": 64,
+    "chain_order": [
+      "binder_A"
+    ],
+    "feature_sha256": "9edd4886ba5520e6f273c38ab58821a138f8eb100f5aa8497e21c0b205363956",
+    "loss_terms": [
+      {
+        "type": "PLDDTLoss",
+        "weight": 1.0
+      },
+      {
+        "type": "WithinBinderPAE",
+        "weight": 0.05
+      },
+      {
+        "type": "WithinBinderContact",
+        "weight": 1.0,
+        "num_contacts_per_residue": 8,
+        "max_contact_distance": 14.0,
+        "min_sequence_separation": 8
+      },
+      {
+        "type": "DistogramRadiusOfGyration",
+        "weight": 0.1
+      },
+      {
+        "type": "HelixLoss",
+        "weight": 0.3
+      },
+      {
+        "type": "InverseFoldingSequenceRecovery",
+        "weight": 5.0,
+        "temp": 0.1,
+        "num_samples": 4,
+        "jacobi_iterations": 10
+      }
+    ],
+    "protocol_sha256": null,
+    "contact_loss_implementation": "metal_losses.py: equivalent contact reduction",
+    "model": "model_1_multimer_v3",
+    "precision": "float32",
+    "forward_passes": 1,
+    "initial_loss": 5.534087657928467,
+    "initial_aux": [
+      {
+        "plddt": 0.5845228433609009
+      },
+      {
+        "bb_pae": 15.789712905883789
+      },
+      {
+        "intra_contact": -4.989672660827637
+      },
+      {
+        "radius_of_gyration": 18.427745819091797
+      },
+      {
+        "helix": -0.5282012820243835
+      },
+      {
+        "sequence_recovery": 0.05177101492881775
+      }
+    ],
+    "gradient_devices": [
+      "MPS:0"
+    ],
+    "mpnn_weight": 5.0,
+    "mpnn_samples": 4,
+    "compile_and_first_gradient_seconds": 4.35427337497822,
+    "warm_gradient_seconds": 0.62617683399003,
+    "versions": {
+      "jax": "0.11.2",
+      "jaxlib": "0.11.2",
+      "jax-mps": "0.11.0",
+      "equinox": "0.13.8"
+    },
+    "scope": "Small de novo monomer, full AF2 confidence/structure gradients; not binder design or experimental validation."
+  },
+  "passed": true
+}

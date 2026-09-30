@@ -1,0 +1,103 @@
+{
+  "backend": "mps",
+  "jax": "0.11.2",
+  "device": "MPS:0",
+  "attention_backend": "stock",
+  "cuequivariance_available": false,
+  "model": "model_1_multimer_v3",
+  "binder_length": 40,
+  "target_length": 60,
+  "num_recycle": 0,
+  "seconds_build_and_load_params": 0.21659004199318588,
+  "bfloat16": true,
+  "parameter_tensors": 330,
+  "parameter_count": 93223705,
+  "seconds_first_call_including_compile": 2.424618040997302,
+  "seconds_second_call": 0.6330355000100099,
+  "repeat_bit_identical": true,
+  "metrics": {
+    "distogram": {
+      "shape": [
+        100,
+        100,
+        64
+      ],
+      "mean": -0.8288252669497757,
+      "min": -82.81428527832031,
+      "max": 159.3666229248047,
+      "finite": true
+    },
+    "experimentally_resolved_ca": {
+      "shape": [
+        100
+      ],
+      "mean": 0.9762045514583587,
+      "min": 0.5107197761535645,
+      "max": 0.9998853206634521,
+      "finite": true
+    },
+    "iptm": {
+      "shape": [],
+      "mean": 0.08042426407337189,
+      "min": 0.08042426407337189,
+      "max": 0.08042426407337189,
+      "finite": true
+    },
+    "iptm_per_residue": {
+      "shape": [
+        100
+      ],
+      "mean": 0.05035611229017377,
+      "min": 0.028780680149793625,
+      "max": 0.08042426407337189,
+      "finite": true
+    },
+    "pae": {
+      "shape": [
+        100,
+        100
+      ],
+      "mean": 19.146472578316928,
+      "min": 0.7500005960464478,
+      "max": 29.517948150634766,
+      "finite": true
+    },
+    "plddt": {
+      "shape": [
+        100
+      ],
+      "mean": 0.31395813062787054,
+      "min": 0.16141876578330994,
+      "max": 0.401471346616745,
+      "finite": true
+    },
+    "ptm": {
+      "shape": [],
+      "mean": 0.15827395021915436,
+      "min": 0.15827395021915436,
+      "max": 0.15827395021915436,
+      "finite": true
+    }
+  },
+  "chains": {
+    "binder": {
+      "residues": 40,
+      "resolved_atoms": 326,
+      "coordinate_absmax": 33.1875,
+      "radius_of_gyration": 16.172836355654017,
+      "ca_ca_span_mean": 3.7899040294066606,
+      "ca_ca_span_max": 3.955374820082945,
+      "finite": true
+    },
+    "target_probe": {
+      "residues": 60,
+      "resolved_atoms": 498,
+      "coordinate_absmax": 24.484375,
+      "radius_of_gyration": 14.637095059082789,
+      "ca_ca_span_mean": 3.7992140208735075,
+      "ca_ca_span_max": 4.16837757290012,
+      "finite": true
+    }
+  },
+  "peak_rss_gib": 1.202484130859375
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "loss": "intra_upstream",
+    "relative_l2": 0.20262552797794342,
+    "max_absolute_error": 0.0024978024885058403
+  },
+  {
+    "loss": "intra_corrected",
+    "relative_l2": 2.712978925956122e-07,
+    "max_absolute_error": 7.566995918750763e-10
+  },
+  {
+    "loss": "inter_upstream",
+    "relative_l2": 2.7036557526116667e-07,
+    "max_absolute_error": 1.4901161193847656e-08
+  },
+  {
+    "loss": "inter_corrected",
+    "relative_l2": 2.7036557526116667e-07,
+    "max_absolute_error": 1.4901161193847656e-08
+  },
+  {
+    "loss": "selected_upstream",
+    "relative_l2": 0.4482826292514801,
+    "max_absolute_error": 0.03059733659029007
+  },
+  {
+    "loss": "selected_corrected",
+    "relative_l2": 4.487644957862358e-07,
+    "max_absolute_error": 3.3527612686157227e-08
+  }
+]

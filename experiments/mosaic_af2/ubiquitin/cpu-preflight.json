@@ -1,0 +1,28 @@
+{
+  "backend": "cpu:0",
+  "total_length": 124,
+  "binder_length": 48,
+  "target_length": 76,
+  "binder_asym_id": 1,
+  "target_asym_id": 2,
+  "exported_pdb_chain_labels": [
+    "B",
+    "C"
+  ],
+  "feature_residue_index_ranges": {
+    "binder": [
+      0,
+      47
+    ],
+    "target": [
+      0,
+      75
+    ]
+  },
+  "binder_template_mask_sum": 0,
+  "target_template_mask_sum": 602,
+  "target_backbone_atom_mask_sum": 304,
+  "target_sequence_preserved_by_set_binder_sequence": true,
+  "no_model_weights_loaded": true,
+  "no_gpu_used": true
+}
