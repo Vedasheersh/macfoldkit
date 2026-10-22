@@ -121,6 +121,8 @@ A 76-residue Mosaic redesign with 36 substitutions refolded with Boltz2 to
 agreed to relative L2 error 1.28e-6. This is an in-silico example, not evidence
 of preserved biological function. [Release validation](docs/validation.md)
 separates those earlier results from tests of the packaged installer.
+[Lessons](docs/lessons.md) records how these numbers were arrived at, including
+measurements that were published here and later withdrawn.
 
 ## Contributing and upstream patches
 
