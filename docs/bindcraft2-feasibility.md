@@ -256,34 +256,49 @@ gates all work on Apple Silicon at a usable speed.
 
 ### What is still not established
 
-### What is still not established
+An earlier revision of this section stated that no AF2 gradient met the 0.5% gate, that
+nothing beyond isolated primitives had run, and that the backward-pass discrepancy was the
+blocker. All three were superseded by the measurements above and are retracted. What
+follows is the scope that genuinely remains open.
 
-### What is still not established
-
-### What is still not established
-
-- **No AF2 gradient meets the 0.5% gate on MPS.** Only the forward does, and only in float32.
-- One loss scalar (mean pLDDT) was differentiated. BindCraft2's composite loss registry, its
-  structure and contact terms and the full `DesignLoss` plumbing were not exercised.
-- Everything ran at `num_recycle=0`. Recycling is `stop_gradient`-wrapped per iteration
-  (`af2.py:140`) but was not measured.
-- All inputs were random sequences with no MSA and no real template, a low-confidence and
-  precision-sensitive regime. The bf16 numbers are an upper bound on the discrepancy, not a
-  typical one.
-- Sizes were 40-100 residues padded to 64/128. Nothing at campaign scale; memory headroom
-  there is unknown (peak RSS here 1.2-3.0 GiB of 24).
-- No trajectory, no optimization loop, no MPNN redesign stage, no filters, no campaign.
-  ProteinMPNN's forward pass was never run with real weights, only its featuriser.
+- **Gradient parity rests on one configuration.** 0.288% at a real ubiquitin sequence,
+  `model_1_ptm`, one loss scalar (mean pLDDT), `num_recycle=0`, L=76, no MSA, no template.
+  That is looser than the 0.026-0.159% Mosaic's full AF2 gradient reaches on a real target,
+  and the multimer gradient path was never compared against CPU.
+- **The loss registry runs but is not numerically checked.** A full trajectory exercises
+  BindCraft2's composite `DesignLoss`, its structure and contact terms and the per-round
+  recording. No individual term has a CPU/MPS parity measurement.
+- **Recycled gradients are unmeasured.** Every parity probe ran at `num_recycle=0`.
+  Recycling is `stop_gradient`-wrapped per iteration (`af2.py:140`), so the exposure is
+  expected to be small, but expected is not measured.
+- **No MSA and no real template anywhere**, in any probe or trajectory. The bf16
+  discrepancy figures come from random low-confidence sequences and are an upper bound on
+  the error, not a typical one.
+- **Memory is characterised only at ubiquitin scale.** The binder scan covers a 76-residue
+  target with 20/40/60-mers, padding to a 108- or 140-residue complex, at 15.23-27.85 GB
+  device peak. A real campaign target is larger and its headroom is unknown; the 24.48 GB
+  limit is close enough that the unchunked 140-residue case already exceeds it.
+- **No stage past anneal has ever executed.** Harden, mutate, the MPNN redesign stage and
+  the filters were all downstream of the gate that stopped the full-budget run. ProteinMPNN's
+  forward pass has still only been run as its featuriser, never with real weights.
+- **One trajectory is not a campaign.** `design_models=1` rather than the 5-model pool, one
+  seed, no epitope hotspots, against a promiscuous hub protein. Nothing about design quality
+  or success rate follows.
 - `fused_triangle_multiplicative_update` (cuEquivariance) remains unavailable and untested.
 
 Remaining work:
 
-- Replace the CUDA-oriented installer with an isolated Mac environment.
-- Bypass NVIDIA-only device discovery and multiprocessing; use one MPS worker. CUDA coupling
-  is confined to five files: `design_workers.py`, `selfcheck.py`, `cli.py`, `af/accel.py`,
+- Replace the CUDA-oriented installer with an isolated Mac environment. The trajectory
+  driver here reaches the model by path and a side dependency directory, which is enough to
+  run but is not an installation.
+- Bypass NVIDIA-only device discovery and multiprocessing for the campaign entry points;
+  use one MPS worker. The direct `bindcraft.trajectory` path needs none of this, but CUDA
+  coupling still sits in `design_workers.py`, `selfcheck.py`, `cli.py`, `af/accel.py` and
   `af/alphafold/model/modules.py`.
-- **Resolve the backward-pass discrepancy**, which is the actual blocker.
-- Turn off the hardcoded `bfloat16 = True` for Mac.
+- Report the two Mac-specific defaults upstream: the hardcoded `bfloat16 = True`
+  (`af2.py:252`), which is both slower and less accurate on MPS, and
+  `resolve_subbatch_size`'s 384-residue threshold (`af2.py:203-206`), which leaves attention
+  unchunked at exactly the sizes a binder trajectory uses.
 
 The upstream [license](https://github.com/PacesaLab/BindCraft2/blob/e6d30f6ea2e5bbc2f62ae7fa722f183da6c6c29f/LICENSE)
 is named **BindCraft2 Source-Available License (Hosting-Restricted)** and states
