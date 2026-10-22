@@ -12,3 +12,10 @@ build/
 *.pt
 *.ckpt
 *.safetensors
+# Small recorded experiment arrays; model weights remain excluded.
+!experiments/mosaic_af2/ubiquitin/design/hard-output.npz
+!experiments/mosaic_af2/ubiquitin/design/optimized.npz
+!experiments/mosaic_af2/ubiquitin/v2/design/hard-output.npz
+!experiments/mosaic_af2/ubiquitin/v2/design/optimized.npz
+!experiments/mosaic_af2/ubiquitin/v2/design/final-pssm.npz
+!experiments/mosaic_af2/ubiquitin/v3/**/design/*.npz

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — source-checkout experiments
+
+- Full Mosaic AF2/ProteinMPNN monomer and ubiquitin binder workflows on MPS.
+- Contact-loss reverse-mode workaround with analytical and full-model CPU/MPS checks.
+- Frozen binder screening with target-aligned pose metrics, six recorded refolds
+  (no passing candidate), and 13 evaluator tests in CI.
+- BindCraft2 feasibility audit; no BindCraft2 GPU port or CLI expansion.
+
 ## 0.1.0a1
 
 - Lightweight CLI with isolated pinned backend environments and portable caches.

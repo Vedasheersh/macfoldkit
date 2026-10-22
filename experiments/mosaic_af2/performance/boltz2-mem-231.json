@@ -1,0 +1,31 @@
+{
+  "binder_length": 60,
+  "target": "egfr",
+  "target_length": 171,
+  "total_length": 231,
+  "device": "MPS:0",
+  "runs": [
+    {
+      "sampling_steps": 25,
+      "compile_and_first_seconds": 19.02492937500938,
+      "warm_gradient_seconds": 12.919412124989321,
+      "loss": -0.4261116087436676,
+      "gradient_finite": true,
+      "peak_gb": 10.165794694,
+      "device_memory_stats": {
+        "num_allocs": -1,
+        "bytes_in_use": 2109003694,
+        "peak_bytes_in_use": 10165794694,
+        "largest_alloc_size": -1,
+        "bytes_limit": 24481313587,
+        "bytes_reserved": -1,
+        "peak_bytes_reserved": -1,
+        "largest_free_block_bytes": -1,
+        "pool_bytes": 18101121785
+      },
+      "process_peak_rss_gb": 5.24992512
+    }
+  ],
+  "load_seconds": 8.77769933300442,
+  "feature_seconds": 0.6879994590126444
+}

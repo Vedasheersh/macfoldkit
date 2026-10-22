@@ -1,0 +1,31 @@
+{
+  "scope": "Full AF2 structure/confidence surrogate gradient; forward score equality is not gradient equality.",
+  "comparisons": [
+    {
+      "length": 32,
+      "cpu_loss": 5.454044818878174,
+      "mps_loss": 5.454044342041016,
+      "gradient_relative_l2": 0.03243714198470116,
+      "gradient_max_abs": 0.08415299654006958,
+      "gradient_cosine": 0.9997824430465698,
+      "initial_sequence_equal": true
+    },
+    {
+      "length": 64,
+      "cpu_loss": 5.792943954467773,
+      "mps_loss": 5.792942523956299,
+      "gradient_relative_l2": 0.030023900792002678,
+      "gradient_max_abs": 0.0223386287689209,
+      "gradient_cosine": 0.9997542500495911,
+      "initial_sequence_equal": true
+    },
+    {
+      "length": 64,
+      "objective": "joint ProteinMPNN recovery",
+      "cpu_loss": 5.534089088439941,
+      "mps_loss": 5.534087657928467,
+      "gradient_relative_l2": 0.029549933969974518,
+      "gradient_cosine": 0.9997541308403015
+    }
+  ]
+}

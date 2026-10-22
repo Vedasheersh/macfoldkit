@@ -1,0 +1,31 @@
+{
+  "binder_length": 48,
+  "target": "ubiquitin",
+  "target_length": 76,
+  "total_length": 124,
+  "device": "MPS:0",
+  "runs": [
+    {
+      "sampling_steps": 25,
+      "compile_and_first_seconds": 5.217700417008018,
+      "warm_gradient_seconds": 3.5707913329824805,
+      "loss": -0.5148119330406189,
+      "gradient_finite": true,
+      "peak_gb": 5.253596221,
+      "device_memory_stats": {
+        "num_allocs": -1,
+        "bytes_in_use": 2092148908,
+        "peak_bytes_in_use": 5253596221,
+        "largest_alloc_size": -1,
+        "bytes_limit": 24481313587,
+        "bytes_reserved": -1,
+        "peak_bytes_reserved": -1,
+        "largest_free_block_bytes": -1,
+        "pool_bytes": 10214534400
+      },
+      "process_peak_rss_gb": 5.24648448
+    }
+  ],
+  "load_seconds": 9.149649582977872,
+  "feature_seconds": 0.4383697079902049
+}

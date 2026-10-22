@@ -1,0 +1,18 @@
+{
+  "binder_length": 48,
+  "target_length": 76,
+  "total_length": 124,
+  "device": "cpu:0",
+  "runs": [
+    {
+      "sampling_steps": 1,
+      "compile_and_first_seconds": 12.391227624990279,
+      "warm_gradient_seconds": 8.730073875020025,
+      "loss": -0.6200810670852661,
+      "gradient_finite": true,
+      "error": "TypeError: 'NoneType' object is not subscriptable"
+    }
+  ],
+  "load_seconds": 11.09705333301099,
+  "feature_seconds": 0.5138458340079524
+}

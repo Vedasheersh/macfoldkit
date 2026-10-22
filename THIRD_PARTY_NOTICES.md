@@ -22,6 +22,11 @@ The adjacent `JOLTZ_LICENSE` and `JOLTZ_NOTICE` retain Nick Boyd's MIT notice an
 the upstream Boltz attribution. `MOSAIC_LICENSE` also accompanies this adapter.
 Downloaded Mosaic source retains its ProteinMPNN, AlphaFold and data notices.
 
+The source-checkout experiment in `experiments/mosaic_af2` adapts Mosaic's
+single-checkpoint AF2 wrapper and contact-loss equations. Its adjacent
+`MOSAIC_LICENSE` retains the MIT notice. The experiment adds a reverse-mode
+contact reduction workaround and is not included in the alpha wheel.
+
 The example `1ubq.cif` is copied from Mosaic's tests and represents the public
 ubiquitin structure [PDB 1UBQ](https://www.rcsb.org/structure/1UBQ). It is a
 numerical/structural example, not a newly solved structure.

@@ -1,0 +1,99 @@
+{
+  "framework": "jax-mps",
+  "version": "0.11.2",
+  "device": "MPS:0",
+  "components": [
+    {
+      "component": "layernorm",
+      "forward_seconds": 0.0009011249931063503,
+      "forward_checksum": 0.00013647493744883832,
+      "forward_abs_mean": 0.7992877233479353,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0009302500111516565,
+      "grad_checksum": -0.0004041271267851698,
+      "grad_abs_mean": 1.6685581117817217e-05
+    },
+    {
+      "component": "gating",
+      "forward_seconds": 0.00030162499751895666,
+      "forward_checksum": 132.00678218561143,
+      "forward_abs_mean": 0.39867905044540075,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0006162089994177222,
+      "grad_checksum": -10010.638636057527,
+      "grad_abs_mean": 0.4923148027099689
+    },
+    {
+      "component": "triangle_mult",
+      "forward_seconds": 0.00039587498758919537,
+      "forward_checksum": 613569.4428456374,
+      "forward_abs_mean": 3.0802370670761428,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0010980420047417283,
+      "grad_checksum": 339399.03167250636,
+      "grad_abs_mean": 121.44227692198858
+    },
+    {
+      "component": "triangle_attention",
+      "forward_seconds": 0.0009247080015484244,
+      "forward_checksum": -219.78685122490162,
+      "forward_abs_mean": 0.482804901911074,
+      "output_shape": [
+        124,
+        124,
+        4,
+        32
+      ],
+      "backward_seconds": 0.0032211249927058816,
+      "grad_checksum": -2650.8490569263377,
+      "grad_abs_mean": 2.05278364178345
+    },
+    {
+      "component": "transition",
+      "forward_seconds": 0.0009094160050153732,
+      "forward_checksum": -38510.67554512727,
+      "forward_abs_mean": 0.3668907631821666,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0019147919956594706,
+      "grad_checksum": -131316.05120354926,
+      "grad_abs_mean": 0.540779951229444
+    },
+    {
+      "component": "block_composed",
+      "forward_seconds": 0.0017925419961102307,
+      "forward_checksum": 577014.0074132564,
+      "forward_abs_mean": 3.216143087872233,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.004230375023325905,
+      "grad_checksum": 1154028.0564188063,
+      "grad_abs_mean": 92.99203958128253
+    }
+  ],
+  "shapes": {
+    "N": 124,
+    "C": 128,
+    "heads": 4,
+    "head_dim": 32,
+    "pair_tensor_mb": 7.872512
+  }
+}

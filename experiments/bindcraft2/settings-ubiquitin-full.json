@@ -1,0 +1,13 @@
+{
+  "campaign_name": "ubiquitin_mac_full",
+  "project_folder": "results/ubiquitin_mac_full",
+  "modality": "binder",
+  "targets": [
+    { "name": "ubiquitin", "target_path": "../mosaic_af2/ubiquitin/ubiquitin-target.cif", "chains": "A" }
+  ],
+  "binder_lengths": [60, 60],
+  "number_of_final_designs": 1,
+  "max_trajectories": 1,
+  "design_models": 1,
+  "save_design_sequences": true
+}

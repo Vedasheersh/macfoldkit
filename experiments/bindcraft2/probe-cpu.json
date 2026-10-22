@@ -1,0 +1,53 @@
+{
+  "backend": "cpu",
+  "jax": "0.11.2",
+  "device": "cpu:0",
+  "selected_attention_backend": "stock",
+  "cuequivariance_available": false,
+  "checks": [
+    {
+      "label": "attend_stock",
+      "value": 9162.173828125,
+      "seconds": 0.051888582995161414,
+      "grad_norms": [
+        807.4579642180901,
+        818.8553823427674,
+        258.64748824694124,
+        161.4896104699886,
+        142.70645577555075
+      ],
+      "grad_zero_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "finite": true
+    },
+    {
+      "label": "attend_chunked",
+      "value": 9162.173828125,
+      "seconds": 0.12890833301935345,
+      "grad_norms": [
+        807.4579642180901,
+        818.8553834889143,
+        258.6474886237539,
+        161.48960805504998,
+        142.70645577555075
+      ],
+      "grad_zero_fraction": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "finite": true
+    },
+    {
+      "label": "triangle_multiplicative_update",
+      "error": "ModuleNotFoundError(\"No module named 'cuequivariance_jax'\")"
+    }
+  ]
+}

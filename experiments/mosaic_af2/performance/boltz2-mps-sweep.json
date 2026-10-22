@@ -1,0 +1,30 @@
+{
+  "binder_length": 48,
+  "target_length": 76,
+  "total_length": 124,
+  "device": "MPS:0",
+  "runs": [
+    {
+      "sampling_steps": 1,
+      "error": "JaxRuntimeError: INTERNAL: Output count mismatch: expected 5, got 0 (eval: svd_impl: sgesvdx_ failed with code -4)"
+    },
+    {
+      "sampling_steps": 5,
+      "compile_and_first_seconds": 12.930963541992242,
+      "warm_gradient_seconds": 3.0235824169940315,
+      "loss": -0.6131366491317749,
+      "gradient_finite": true,
+      "peak_gb": 44.424406812
+    },
+    {
+      "sampling_steps": 25,
+      "compile_and_first_seconds": 4.774972042010631,
+      "warm_gradient_seconds": 3.684969458001433,
+      "loss": -0.5133410692214966,
+      "gradient_finite": true,
+      "peak_gb": 44.424406812
+    }
+  ],
+  "load_seconds": 9.139376165985595,
+  "feature_seconds": 0.4403686659934465
+}

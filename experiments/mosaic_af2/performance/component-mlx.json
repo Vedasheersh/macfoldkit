@@ -1,0 +1,111 @@
+{
+  "framework": "mlx",
+  "version": "0.32.0",
+  "device": "Device(gpu, 0)",
+  "components": [
+    {
+      "component": "layernorm",
+      "forward_eager_seconds": 0.00039341600495390594,
+      "forward_seconds": 0.00032083402038551867,
+      "forward_checksum": 0.00013647493744883832,
+      "forward_abs_mean": 0.7992877233479353,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0017997499962802976,
+      "grad_checksum": -0.0004041271267851698,
+      "grad_abs_mean": 1.6685581117817217e-05,
+      "backward_eager_seconds": 0.0011395420006010681
+    },
+    {
+      "component": "gating",
+      "forward_eager_seconds": 0.00029683299362659454,
+      "forward_seconds": 0.0002598749997559935,
+      "forward_checksum": 132.00680497953726,
+      "forward_abs_mean": 0.39867905043524315,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0006029579963069409,
+      "grad_checksum": -10010.639082113077,
+      "grad_abs_mean": 0.49231480015073675,
+      "backward_eager_seconds": 0.0009355839865747839
+    },
+    {
+      "component": "triangle_mult",
+      "forward_eager_seconds": 0.00039587501669302583,
+      "forward_seconds": 0.00040800002170726657,
+      "forward_checksum": 613569.4227378631,
+      "forward_abs_mean": 3.080236970606759,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0011176670086570084,
+      "grad_checksum": 339398.9547632445,
+      "grad_abs_mean": 121.4422692114132,
+      "backward_eager_seconds": 0.001017792004859075
+    },
+    {
+      "component": "triangle_attention",
+      "forward_eager_seconds": 0.0011547500034794211,
+      "forward_seconds": 0.0010115829936694354,
+      "forward_checksum": -219.7872737907727,
+      "forward_abs_mean": 0.4828049496802773,
+      "output_shape": [
+        124,
+        124,
+        4,
+        32
+      ],
+      "backward_seconds": 0.002684499981114641,
+      "grad_checksum": -2650.848610568646,
+      "grad_abs_mean": 2.0527838795411526,
+      "backward_eager_seconds": 0.003400542016606778
+    },
+    {
+      "component": "transition",
+      "forward_eager_seconds": 0.0009392079955432564,
+      "forward_seconds": 0.0009363749995827675,
+      "forward_checksum": -38510.66933477932,
+      "forward_abs_mean": 0.36689074867514565,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.001899166003568098,
+      "grad_checksum": -131315.61860975175,
+      "grad_abs_mean": 0.5407800157417018,
+      "backward_eager_seconds": 0.0022792920062784106
+    },
+    {
+      "component": "block_composed",
+      "forward_eager_seconds": 0.0018990829994436353,
+      "forward_seconds": 0.001723959023365751,
+      "forward_checksum": 577013.9963590534,
+      "forward_abs_mean": 3.216142994132808,
+      "output_shape": [
+        124,
+        124,
+        128
+      ],
+      "backward_seconds": 0.0041719580185599625,
+      "grad_checksum": 1154027.9775663316,
+      "grad_abs_mean": 92.99203131627708,
+      "backward_eager_seconds": 0.005008084001019597
+    }
+  ],
+  "shapes": {
+    "N": 124,
+    "C": 128,
+    "heads": 4,
+    "head_dim": 32,
+    "pair_tensor_mb": 7.872512
+  }
+}

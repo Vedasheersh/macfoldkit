@@ -1,0 +1,15 @@
+{
+ "backend": "mps",
+ "shapes": {
+  "n_seq": 1,
+  "n_res": 124,
+  "c_out": 32,
+  "c_z": 128
+ },
+ "current_seconds": 0.0015442919975612313,
+ "reordered_seconds": 0.0001966250129044056,
+ "speedup": 7.853995657775388,
+ "same_shape": true,
+ "max_abs_diff": 1.239776611328125e-05,
+ "rel_l2": 5.869549088662799e-07
+}

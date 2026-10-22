@@ -1,0 +1,44 @@
+[
+  {
+    "candidate": "hallucinated",
+    "seed": 11,
+    "original_report_sha256": "8e6fc326f81a02ccbc0012fd5836723f3c3db824b7101d663a53044b8ca52b98",
+    "published_report_sha256": "f380adaeea079114839ee195425e5770df76b799def47e7fddd469c7d0660a16",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  },
+  {
+    "candidate": "hallucinated",
+    "seed": 7,
+    "original_report_sha256": "60bfbe840c29109598063d7dc7bb2772f48da3f7fcde777f07076c2c2588fd35",
+    "published_report_sha256": "5719ccda6864c574cbb71f73d4de0a45c4e1046dbaaa95d6e118210a2f0a55fc",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  },
+  {
+    "candidate": "mpnn_1",
+    "seed": 11,
+    "original_report_sha256": "7fcbd516581dcf101ee3e5a5658c8594f830b899576e7d765a7cbf151648e0b4",
+    "published_report_sha256": "47e9e62c413dc25c6c14eacbe4a0676cba77bf7bfacfc7a59bf071d5bcd423ae",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  },
+  {
+    "candidate": "mpnn_1",
+    "seed": 7,
+    "original_report_sha256": "c75de7eae07f8fc02253e983823fccd1e3b4a1e47934d65bee3727a9eb4c9c28",
+    "published_report_sha256": "8e3da198aa2da1f086fd29b048c586090c3b9bcd835f80f6f3e755f13a0269ef",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  },
+  {
+    "candidate": "mpnn_2",
+    "seed": 11,
+    "original_report_sha256": "c936082ac1b09b6d92663f10c1dc818c5ff7b60d00272b83b3caa4799ccbb063",
+    "published_report_sha256": "dee3e0adc948914dfc026f4977e21f10dc10ad0cd05661b24320027e8c240db7",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  },
+  {
+    "candidate": "mpnn_2",
+    "seed": 7,
+    "original_report_sha256": "46614a50be1528928af829cb6d1695c95557b666e20aea6c8905c8117e98a2bf",
+    "published_report_sha256": "cb85f4bdfc4cd85318466cc496c8ed1252317bb65f86165e6f25f6e889a7027a",
+    "normalization": "Local absolute workspace prefix replaced by ${WORKSPACE}; scientific values unchanged."
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "scope": "In-silico monomer self-consistency only; no binding or experimental validation.",
+  "alignment": "Every C-alpha by residue position, proper-rotation Kabsch",
+  "example_screen": {
+    "plddt_min": 80,
+    "ptm_min": 0.6,
+    "ca_rmsd_max_angstrom": 2.0
+  },
+  "design_loss_initial": 5.534087657928467,
+  "design_loss_best": -0.2936549186706543,
+  "candidates": [
+    {
+      "name": "hallucinated",
+      "sequence": "AAAAPAARAAKAAALAAARAECEAECAERVAAASPEDKAAVAAACEAECAAELARLEAELDAAF",
+      "ca_rmsd_angstrom": 2.6048715744184006,
+      "plddt_0_to_100": 94.24251317977905,
+      "ptm": 0.8461101055145264,
+      "inference_seconds": 3.1719459580199327,
+      "max_amino_acid_fraction": 0.5,
+      "sequence_entropy_bits": 2.4809487351738495,
+      "passes_example_screen": false
+    },
+    {
+      "name": "mpnn_1",
+      "sequence": "EAAAAAAAAAAAARLAALAARLAAACAAAVAAAPPADAARVAAACRAAAAAELARAAAALEAEG",
+      "ca_rmsd_angstrom": 0.651537679003208,
+      "plddt_0_to_100": 96.10236883163452,
+      "ptm": 0.8735816478729248,
+      "inference_seconds": 3.254219208989525,
+      "max_amino_acid_fraction": 0.65625,
+      "sequence_entropy_bits": 1.8797404264752884,
+      "passes_example_screen": true
+    },
+    {
+      "name": "mpnn_2",
+      "sequence": "EEEKKEREKKKKEELEKKRKELEKEREKRVAAAKPEDKEKVAKEEEKKEKEELEKLKKKLEEEY",
+      "ca_rmsd_angstrom": 0.9956050438317354,
+      "plddt_0_to_100": 95.49378752708435,
+      "ptm": 0.8172677755355835,
+      "inference_seconds": 3.157084832986584,
+      "max_amino_acid_fraction": 0.375,
+      "sequence_entropy_bits": 2.2850588109099204,
+      "passes_example_screen": true
+    }
+  ]
+}

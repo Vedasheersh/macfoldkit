@@ -1,0 +1,35 @@
+{
+  "framework": "mlx",
+  "stages": [
+    {
+      "stage": "s1_layernorm",
+      "seconds": 0.00031795797985978425,
+      "checksum": 0.00013647493744883832
+    },
+    {
+      "stage": "s2_one_matmul",
+      "seconds": 0.00039999998989515007,
+      "checksum": -608.9155533081159
+    },
+    {
+      "stage": "s3_two_matmul",
+      "seconds": 0.0005183749890420586,
+      "checksum": 457.6800693739715
+    },
+    {
+      "stage": "s4_gating",
+      "seconds": 0.0005207500071264803,
+      "checksum": -380.6553212888417
+    },
+    {
+      "stage": "s5_gating_einsum",
+      "seconds": 0.0007478749903384596,
+      "checksum": 174454.36403166995
+    },
+    {
+      "stage": "s6_full_block",
+      "seconds": 0.0008357919869013131,
+      "checksum": 176409.19399672665
+    }
+  ]
+}

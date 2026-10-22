@@ -1,0 +1,20 @@
+{
+  "binder_length": 48,
+  "target_length": 76,
+  "total_length": 124,
+  "forward": {
+    "seconds": 0.4831354169873521,
+    "flops": 0.0,
+    "bytes_accessed": 0.0,
+    "gflops_achieved": null,
+    "arithmetic_intensity": null
+  },
+  "value_and_grad": {
+    "seconds": 1.9938369579904247,
+    "flops": 0.0,
+    "bytes_accessed": 0.0,
+    "gflops_achieved": null,
+    "arithmetic_intensity": null
+  },
+  "backward_multiplier": 4.1268697923725615
+}

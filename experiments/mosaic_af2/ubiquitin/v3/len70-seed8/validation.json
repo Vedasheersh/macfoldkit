@@ -1,0 +1,2902 @@
+{
+  "scope": "Computational self-consistency screen only; no experimental evidence of binding.",
+  "protocol": {
+    "protocol_version": "ubiquitin-binder-demo-v3-len70",
+    "scope": "Computational binder-design workflow demonstration, not evidence of binding. v3 changes exactly one variable across its two arms: binder length. All seeds are pre-registered; every outcome is reported.",
+    "target": {
+      "pdb": "1UBQ",
+      "input": "ubiquitin-target.cif",
+      "chain": "A",
+      "length": 76,
+      "template": true,
+      "msa": "empty",
+      "sequence_fixed": true
+    },
+    "binder": {
+      "length": 70,
+      "epitope": null,
+      "initialization": "0.01 * NumPy PCG64(seed).standard_normal logits, row-centered, float32",
+      "seeds": [
+        7,
+        8,
+        9
+      ],
+      "pre_registration": "All three seeds are declared before any run and every outcome is reported, passing or failing. Additional seeds are not permitted under this protocol version."
+    },
+    "model": {
+      "name": "model_1_multimer_v3",
+      "precision": "float32",
+      "forward_passes": 1,
+      "dropout": false,
+      "objective_key": 7,
+      "source_sha": "b94b9d4eb9907a700a6d78ed2d29d3704c5df46c"
+    },
+    "optimization": {
+      "algorithm": "mosaic.optimizers.bindcraft_design",
+      "implementation": "upstream 4 x mosaic.optimizers.colabdesign_stage (ColabDesign/BindCraft schedule)",
+      "steps": 125,
+      "lr": 0.1,
+      "norm_seq_grad": true,
+      "stages": [
+        {
+          "name": "logits_1",
+          "n_steps": 50,
+          "soft_start": 0.0,
+          "soft_end": 0.9,
+          "temp_start": 1.0,
+          "temp_end": 1.0,
+          "hard": false
+        },
+        {
+          "name": "logits_2",
+          "n_steps": 25,
+          "soft_start": 0.9,
+          "soft_end": 1.0,
+          "temp_start": 1.0,
+          "temp_end": 1.0,
+          "hard": false
+        },
+        {
+          "name": "soft_anneal",
+          "n_steps": 45,
+          "soft_start": 1.0,
+          "soft_end": 1.0,
+          "temp_start": 1.0,
+          "temp_end": 0.01,
+          "hard": false
+        },
+        {
+          "name": "hard",
+          "n_steps": 5,
+          "soft_start": 1.0,
+          "soft_end": 1.0,
+          "temp_start": 0.01,
+          "temp_end": 0.01,
+          "hard": true
+        }
+      ],
+      "pick": "minimum finite evaluated total objective among hard-stage (straight-through one-hot) evaluations only; ties to earliest. The selected iterate is a true one-hot, so the exported sequence is the sequence that was evaluated.",
+      "extra_seeds": []
+    },
+    "loss": [
+      {
+        "type": "PLDDTLoss",
+        "weight": 1.0
+      },
+      {
+        "type": "WithinBinderContact",
+        "weight": 1.0,
+        "num_contacts_per_residue": 8,
+        "max_contact_distance": 14.0,
+        "min_sequence_separation": 8
+      },
+      {
+        "type": "BinderTargetContact",
+        "weight": 1.0,
+        "contact_distance": 8.0,
+        "paratope_size": 12,
+        "epitope_idx": null
+      },
+      {
+        "type": "WithinBinderPAE",
+        "weight": 0.05
+      },
+      {
+        "type": "BinderTargetPAE",
+        "weight": 0.05
+      },
+      {
+        "type": "TargetBinderPAE",
+        "weight": 0.05
+      },
+      {
+        "type": "IPTMLoss",
+        "weight": 0.25
+      },
+      {
+        "type": "DistogramRadiusOfGyration",
+        "weight": 0.1
+      },
+      {
+        "type": "HelixLoss",
+        "weight": 0.3
+      },
+      {
+        "type": "InverseFoldingSequenceRecovery",
+        "weight": 5.0,
+        "temp": 0.1,
+        "num_samples": 4,
+        "jacobi_iterations": 10
+      }
+    ],
+    "redesign": {
+      "method": "mosaic.losses.protein_mpnn.inverse_fold",
+      "binder_length": 70,
+      "temperature": 0.1,
+      "jacobi_iterations": 10,
+      "seed_offsets": [
+        100,
+        101
+      ],
+      "preserve_target": true,
+      "candidates": [
+        "hallucinated",
+        "mpnn_1",
+        "mpnn_2"
+      ]
+    },
+    "independent_refold": {
+      "model": "Synthyra/Boltz2",
+      "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+      "seeds": [
+        7,
+        11
+      ],
+      "profile": "balanced",
+      "pair_precision": "float32",
+      "msa": "empty on both chains",
+      "template": false,
+      "external_upload": false,
+      "chain_order": [
+        "binder_A",
+        "target_B"
+      ]
+    },
+    "screen": {
+      "all_metrics_required_finite": true,
+      "binder_plddt_min_0_to_100": 80.0,
+      "complex_iptm_min": 0.65,
+      "binder_self_aligned_ca_rmsd_max_angstrom": 2.0,
+      "target_aligned_binder_ca_rmsd_max_angstrom": 3.0,
+      "refold_target_ca_rmsd_to_input_max_angstrom": 2.0,
+      "interchain_heavy_atom_contact_cutoff_angstrom": 5.0,
+      "distinct_contacting_binder_residues_min": 8,
+      "distinct_contacting_target_residues_min": 8,
+      "distinct_contacting_residue_pairs_min": 20,
+      "interchain_minimum_heavy_atom_distance_min_angstrom": 1.5,
+      "sequence_shannon_entropy_min_bits": 2.5,
+      "maximum_single_amino_acid_fraction": 0.3,
+      "maximum_homopolymer_run": 4,
+      "both_boltz_seeds_must_pass": true,
+      "af2_diagnostic_only": [
+        "binder_to_target_pae_mean",
+        "target_to_binder_pae_mean"
+      ]
+    },
+    "derived_from": {
+      "protocol_version": "ubiquitin-binder-demo-v2-bindcraft",
+      "protocol_sha256": "8be27ac63ac929008e472aa0ac93d2d68598c5acdae2089a0411d7bcbafdbe2e",
+      "single_change": "binder length (48 vs 70) and a pre-registered 3-seed set; optimizer, losses, weights, target, redesign, refold and screen unchanged",
+      "paired_arm": "ubiquitin-binder-demo-v3-len48"
+    }
+  },
+  "protocol_sha256": "7f2e0b6a40e1964b05bb30171e69da744b53030731f99898cbb3d8c3d17031ab",
+  "original_target_sha256": "f33c07b4af9930f499ecc76e343b5665ed754bcb73a5af20e3df051f4c711500",
+  "design_summary_sha256": "5467b9df6217adb1f40f978cc16951bf7736ad0421e19adf109476fdc9555576",
+  "alignment": "C-alpha by residue position; proper Kabsch target-only transform applied to binder.",
+  "plddt_source": "Per-residue CA B-factors in FastPLMs CIF (0\u2013100); raw pLDDT presence required.",
+  "af2_diagnostics": {
+    "target_ca_rmsd_to_input_angstrom": 0.3764002615378593,
+    "binder_plddt_0_to_100": 85.2101426260812,
+    "binder_ca_radius_of_gyration_angstrom": 12.476869247163583,
+    "interface": {
+      "distinct_contacting_binder_residues": 21,
+      "distinct_contacting_target_residues": 18,
+      "distinct_contacting_residue_pairs": 58,
+      "interchain_heavy_atom_contacts": 458,
+      "interchain_heavy_atom_clashes": 0,
+      "interchain_minimum_heavy_atom_distance_angstrom": 2.333979862809446,
+      "contacting_residue_pairs_1_based": [
+        [
+          9,
+          9
+        ],
+        [
+          12,
+          9
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          11
+        ],
+        [
+          13,
+          8
+        ],
+        [
+          13,
+          9
+        ],
+        [
+          15,
+          6
+        ],
+        [
+          16,
+          6
+        ],
+        [
+          16,
+          7
+        ],
+        [
+          16,
+          8
+        ],
+        [
+          16,
+          9
+        ],
+        [
+          16,
+          10
+        ],
+        [
+          19,
+          6
+        ],
+        [
+          19,
+          68
+        ],
+        [
+          20,
+          6
+        ],
+        [
+          20,
+          7
+        ],
+        [
+          20,
+          8
+        ],
+        [
+          20,
+          44
+        ],
+        [
+          20,
+          68
+        ],
+        [
+          20,
+          69
+        ],
+        [
+          20,
+          70
+        ],
+        [
+          23,
+          46
+        ],
+        [
+          23,
+          47
+        ],
+        [
+          23,
+          68
+        ],
+        [
+          26,
+          47
+        ],
+        [
+          27,
+          44
+        ],
+        [
+          27,
+          47
+        ],
+        [
+          27,
+          48
+        ],
+        [
+          27,
+          70
+        ],
+        [
+          28,
+          42
+        ],
+        [
+          28,
+          49
+        ],
+        [
+          30,
+          42
+        ],
+        [
+          30,
+          72
+        ],
+        [
+          31,
+          42
+        ],
+        [
+          31,
+          44
+        ],
+        [
+          31,
+          49
+        ],
+        [
+          31,
+          70
+        ],
+        [
+          34,
+          42
+        ],
+        [
+          34,
+          70
+        ],
+        [
+          34,
+          71
+        ],
+        [
+          34,
+          72
+        ],
+        [
+          35,
+          8
+        ],
+        [
+          35,
+          70
+        ],
+        [
+          35,
+          71
+        ],
+        [
+          37,
+          71
+        ],
+        [
+          37,
+          73
+        ],
+        [
+          38,
+          8
+        ],
+        [
+          38,
+          70
+        ],
+        [
+          38,
+          71
+        ],
+        [
+          38,
+          72
+        ],
+        [
+          39,
+          8
+        ],
+        [
+          41,
+          71
+        ],
+        [
+          41,
+          73
+        ],
+        [
+          42,
+          7
+        ],
+        [
+          42,
+          8
+        ],
+        [
+          42,
+          9
+        ],
+        [
+          42,
+          71
+        ],
+        [
+          49,
+          9
+        ]
+      ]
+    },
+    "binder_to_target_pae_mean": 5.908858299255371,
+    "target_to_binder_pae_mean": 4.915622234344482,
+    "binder_raw_plddt_0_to_100": 85.20999908447266,
+    "hard_sequence_metrics": {
+      "loss": 2.4112067222595215,
+      "terms": {
+        "plddt": 0.8521000742912292,
+        "bb_pae": 3.3628177642822266,
+        "intra_contact": -2.5040900707244873,
+        "radius_of_gyration": 16.26266860961914,
+        "helix": -0.44617167115211487,
+        "target_contact": -2.3959786891937256,
+        "bt_pae": 5.908858776092529,
+        "tb_pae": 4.915622234344482,
+        "iptm": 0.7228478789329529,
+        "sequence_recovery": 0.5071428418159485
+      },
+      "binder_plddt_0_to_100": 85.21000742912292,
+      "target_plddt_0_to_100": 92.24745035171509,
+      "binder_to_target_pae_mean": 5.908858299255371,
+      "target_to_binder_pae_mean": 4.915622711181641,
+      "iptm": 0.7228478789329529
+    }
+  },
+  "global_errors": [],
+  "candidates": [
+    {
+      "name": "hallucinated",
+      "sequence": "SPEEELIKLDKEFKESLEDFAKWMLFWDKETIWDFIQSLIHFARNDPIMGIIFWWHAPTLIKWIEEALAR",
+      "sequence_metrics": {
+        "sequence_entropy_bits": 3.7868756534228774,
+        "max_amino_acid_fraction": 0.12857142857142856,
+        "maximum_homopolymer_run": 3,
+        "composition_counts": {
+          "A": 5,
+          "D": 5,
+          "E": 9,
+          "F": 6,
+          "G": 1,
+          "H": 2,
+          "I": 9,
+          "K": 6,
+          "L": 7,
+          "M": 2,
+          "N": 1,
+          "P": 3,
+          "Q": 1,
+          "R": 2,
+          "S": 3,
+          "T": 2,
+          "W": 6
+        }
+      },
+      "trials": [
+        {
+          "seed": 7,
+          "metrics": {
+            "sequence_entropy_bits": 3.7868756534228774,
+            "max_amino_acid_fraction": 0.12857142857142856,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 5,
+              "D": 5,
+              "E": 9,
+              "F": 6,
+              "G": 1,
+              "H": 2,
+              "I": 9,
+              "K": 6,
+              "L": 7,
+              "M": 2,
+              "N": 1,
+              "P": 3,
+              "Q": 1,
+              "R": 2,
+              "S": 3,
+              "T": 2,
+              "W": 6
+            },
+            "complex_iptm": 0.6087938547134399,
+            "binder_plddt_0_to_100": 83.47099990844727,
+            "distinct_contacting_binder_residues": 21,
+            "distinct_contacting_target_residues": 19,
+            "distinct_contacting_residue_pairs": 58,
+            "interchain_heavy_atom_contacts": 500,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 1.9665182429868282,
+            "contacting_residue_pairs_1_based": [
+              [
+                8,
+                10
+              ],
+              [
+                9,
+                9
+              ],
+              [
+                9,
+                10
+              ],
+              [
+                12,
+                6
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                12,
+                11
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                10
+              ],
+              [
+                15,
+                6
+              ],
+              [
+                15,
+                68
+              ],
+              [
+                16,
+                6
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                68
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                44
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                46
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                70
+              ],
+              [
+                30,
+                42
+              ],
+              [
+                30,
+                72
+              ],
+              [
+                30,
+                74
+              ],
+              [
+                30,
+                76
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                33,
+                74
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                70
+              ],
+              [
+                34,
+                71
+              ],
+              [
+                34,
+                72
+              ],
+              [
+                34,
+                73
+              ],
+              [
+                34,
+                74
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                37,
+                73
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                38,
+                8
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                72
+              ],
+              [
+                38,
+                73
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                41,
+                71
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                42,
+                8
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                71
+              ],
+              [
+                49,
+                8
+              ],
+              [
+                49,
+                9
+              ],
+              [
+                49,
+                10
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 1.3736340312294957,
+            "binder_self_aligned_ca_rmsd_angstrom": 0.6119445260090747,
+            "target_aligned_binder_ca_rmsd_angstrom": 2.8533383772575633
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/hallucinated/seed7/prediction.json",
+          "prediction_sha256": "8454aa7c1b05e30b4029ce5d27ca7b1229932e2e01c8ae8c7d97cdcd39ef40ff",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 7,
+            "feature_sha256": "a6f4b23cfa003013c6e8f977856d9cea8e736f6f4b4eedb822b1126bcb80b329",
+            "input_sha256": "31c3da611f66a04fd1ff21aa07d582ff00b698657c3f0b03c26c477d4aaaa33f",
+            "inference_seconds": 5.3160451669828035,
+            "load_seconds": 3.582231500011403,
+            "total_model_seconds": 8.951749750005547,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9057238101959229,
+                "1": 0.6087938547134399
+              },
+              "1": {
+                "0": 0.5740514397621155,
+                "1": 0.9549866914749146
+              }
+            },
+            "ptm": 0.7847517132759094,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "5dc3fa2c24e74357e528dd05c745f833d211868168a1c124dd9b69dfb4ddb213",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 83.47099990844727,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.6087938547134399,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": false
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 0.6119445260090747,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 2.8533383772575633,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 1.3736340312294957,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 21,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 19,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 58,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 1.9665182429868282,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.7868756534228774,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.12857142857142856,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [
+            "complex_iptm"
+          ],
+          "passes_screen": false
+        },
+        {
+          "seed": 11,
+          "metrics": {
+            "sequence_entropy_bits": 3.7868756534228774,
+            "max_amino_acid_fraction": 0.12857142857142856,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 5,
+              "D": 5,
+              "E": 9,
+              "F": 6,
+              "G": 1,
+              "H": 2,
+              "I": 9,
+              "K": 6,
+              "L": 7,
+              "M": 2,
+              "N": 1,
+              "P": 3,
+              "Q": 1,
+              "R": 2,
+              "S": 3,
+              "T": 2,
+              "W": 6
+            },
+            "complex_iptm": 0.776576042175293,
+            "binder_plddt_0_to_100": 85.06528570992606,
+            "distinct_contacting_binder_residues": 22,
+            "distinct_contacting_target_residues": 20,
+            "distinct_contacting_residue_pairs": 61,
+            "interchain_heavy_atom_contacts": 584,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 2.2138333270596506,
+            "contacting_residue_pairs_1_based": [
+              [
+                12,
+                10
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                9
+              ],
+              [
+                13,
+                10
+              ],
+              [
+                15,
+                6
+              ],
+              [
+                16,
+                6
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                16,
+                11
+              ],
+              [
+                17,
+                8
+              ],
+              [
+                19,
+                6
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                7
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                46
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                23,
+                68
+              ],
+              [
+                26,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                70
+              ],
+              [
+                28,
+                42
+              ],
+              [
+                28,
+                49
+              ],
+              [
+                30,
+                42
+              ],
+              [
+                30,
+                72
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                44
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                31,
+                70
+              ],
+              [
+                33,
+                75
+              ],
+              [
+                33,
+                76
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                70
+              ],
+              [
+                34,
+                71
+              ],
+              [
+                34,
+                72
+              ],
+              [
+                34,
+                73
+              ],
+              [
+                34,
+                76
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                37,
+                73
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                37,
+                75
+              ],
+              [
+                37,
+                76
+              ],
+              [
+                38,
+                8
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                72
+              ],
+              [
+                38,
+                73
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                42,
+                8
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                71
+              ],
+              [
+                49,
+                8
+              ],
+              [
+                49,
+                9
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 0.8442356441415444,
+            "binder_self_aligned_ca_rmsd_angstrom": 0.8126175414517929,
+            "target_aligned_binder_ca_rmsd_angstrom": 1.6453408181351559
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/hallucinated/seed11/prediction.json",
+          "prediction_sha256": "d555bb0a7b969dd0c6a1a50584e200658bed57e99cdf484aeb189707adcb11c4",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 11,
+            "feature_sha256": "a6f4b23cfa003013c6e8f977856d9cea8e736f6f4b4eedb822b1126bcb80b329",
+            "input_sha256": "31c3da611f66a04fd1ff21aa07d582ff00b698657c3f0b03c26c477d4aaaa33f",
+            "inference_seconds": 5.003792500006966,
+            "load_seconds": 2.3036716660135426,
+            "total_model_seconds": 7.351948625000659,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9289698004722595,
+                "1": 0.776576042175293
+              },
+              "1": {
+                "0": 0.7682775259017944,
+                "1": 0.9623079895973206
+              }
+            },
+            "ptm": 0.8673480153083801,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "1e20705da08362de07a16f4d658fa4d121de5c8202bde9dff2b5cb0e0b00b566",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 85.06528570992606,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.776576042175293,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": true
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 0.8126175414517929,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 1.6453408181351559,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 0.8442356441415444,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 22,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 20,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 61,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 2.2138333270596506,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.7868756534228774,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.12857142857142856,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [],
+          "passes_screen": true
+        }
+      ],
+      "seed_metric_differences_second_minus_first": {
+        "binder_plddt_0_to_100": 1.5942858014787902,
+        "binder_self_aligned_ca_rmsd_angstrom": 0.2006730154427182,
+        "complex_iptm": 0.16778218746185303,
+        "distinct_contacting_binder_residues": 1.0,
+        "distinct_contacting_residue_pairs": 3.0,
+        "distinct_contacting_target_residues": 1.0,
+        "interchain_heavy_atom_clashes": 0.0,
+        "interchain_heavy_atom_contacts": 84.0,
+        "interchain_minimum_heavy_atom_distance_angstrom": 0.24731508407282243,
+        "max_amino_acid_fraction": 0.0,
+        "maximum_homopolymer_run": 0.0,
+        "refold_target_ca_rmsd_to_input_angstrom": -0.5293983870879513,
+        "sequence_entropy_bits": 0.0,
+        "target_aligned_binder_ca_rmsd_angstrom": -1.2079975591224075
+      },
+      "passing_seeds": 1,
+      "passes_both_seeds": false
+    },
+    {
+      "name": "mpnn_1",
+      "sequence": "SLEEELEEKRKKFKESLEEWFKIMSSLDKETIEDIRQDIEYHAATDPIMGKIVEEFKPEIDKAFAEALAK",
+      "sequence_metrics": {
+        "sequence_entropy_bits": 3.6406661556506066,
+        "max_amino_acid_fraction": 0.21428571428571427,
+        "maximum_homopolymer_run": 3,
+        "composition_counts": {
+          "A": 6,
+          "D": 5,
+          "E": 15,
+          "F": 4,
+          "G": 1,
+          "H": 1,
+          "I": 7,
+          "K": 10,
+          "L": 5,
+          "M": 2,
+          "P": 2,
+          "Q": 1,
+          "R": 2,
+          "S": 4,
+          "T": 2,
+          "V": 1,
+          "W": 1,
+          "Y": 1
+        }
+      },
+      "trials": [
+        {
+          "seed": 7,
+          "metrics": {
+            "sequence_entropy_bits": 3.6406661556506066,
+            "max_amino_acid_fraction": 0.21428571428571427,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 6,
+              "D": 5,
+              "E": 15,
+              "F": 4,
+              "G": 1,
+              "H": 1,
+              "I": 7,
+              "K": 10,
+              "L": 5,
+              "M": 2,
+              "P": 2,
+              "Q": 1,
+              "R": 2,
+              "S": 4,
+              "T": 2,
+              "V": 1,
+              "W": 1,
+              "Y": 1
+            },
+            "complex_iptm": 0.8921666741371155,
+            "binder_plddt_0_to_100": 92.82128590175084,
+            "distinct_contacting_binder_residues": 23,
+            "distinct_contacting_target_residues": 18,
+            "distinct_contacting_residue_pairs": 65,
+            "interchain_heavy_atom_contacts": 561,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 1.9332695104407982,
+            "contacting_residue_pairs_1_based": [
+              [
+                9,
+                9
+              ],
+              [
+                12,
+                6
+              ],
+              [
+                12,
+                8
+              ],
+              [
+                12,
+                9
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                9
+              ],
+              [
+                15,
+                6
+              ],
+              [
+                16,
+                6
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                9
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                17,
+                8
+              ],
+              [
+                19,
+                6
+              ],
+              [
+                19,
+                66
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                7
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                44
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                23,
+                68
+              ],
+              [
+                26,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                48
+              ],
+              [
+                27,
+                49
+              ],
+              [
+                28,
+                42
+              ],
+              [
+                28,
+                49
+              ],
+              [
+                30,
+                42
+              ],
+              [
+                30,
+                72
+              ],
+              [
+                30,
+                74
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                44
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                31,
+                70
+              ],
+              [
+                33,
+                74
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                70
+              ],
+              [
+                34,
+                71
+              ],
+              [
+                34,
+                72
+              ],
+              [
+                34,
+                73
+              ],
+              [
+                34,
+                74
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                44
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                37,
+                73
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                38,
+                8
+              ],
+              [
+                38,
+                69
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                73
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                41,
+                71
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                42,
+                8
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                71
+              ],
+              [
+                49,
+                9
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 1.4768674023224264,
+            "binder_self_aligned_ca_rmsd_angstrom": 0.4007797793918257,
+            "target_aligned_binder_ca_rmsd_angstrom": 1.6532585210275716
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/mpnn_1/seed7/prediction.json",
+          "prediction_sha256": "80708bbd1ebf1cb19c8b74ac02ae57b37d9dd64cfa0e93f7a3ff4a84705ed938",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 7,
+            "feature_sha256": "c078426f1cf468a948b73291b8f896e441bf912e303ee955e82f85840011985e",
+            "input_sha256": "f23700061b8214345c046350f4a8becce0270771ad1770e7c52a17fe7daf1f4b",
+            "inference_seconds": 5.205469916982111,
+            "load_seconds": 2.2956204999936745,
+            "total_model_seconds": 7.541918374976376,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9404187798500061,
+                "1": 0.8879439234733582
+              },
+              "1": {
+                "0": 0.8921666741371155,
+                "1": 0.9645164012908936
+              }
+            },
+            "ptm": 0.9224724769592285,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "e48ecf239a936d10cbfe5e7e61ad90832e63b05874f5e4420788da6294d8c4b5",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 92.82128590175084,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.8921666741371155,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": true
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 0.4007797793918257,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 1.6532585210275716,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 1.4768674023224264,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 23,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 18,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 65,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 1.9332695104407982,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.6406661556506066,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.21428571428571427,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [],
+          "passes_screen": true
+        },
+        {
+          "seed": 11,
+          "metrics": {
+            "sequence_entropy_bits": 3.6406661556506066,
+            "max_amino_acid_fraction": 0.21428571428571427,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 6,
+              "D": 5,
+              "E": 15,
+              "F": 4,
+              "G": 1,
+              "H": 1,
+              "I": 7,
+              "K": 10,
+              "L": 5,
+              "M": 2,
+              "P": 2,
+              "Q": 1,
+              "R": 2,
+              "S": 4,
+              "T": 2,
+              "V": 1,
+              "W": 1,
+              "Y": 1
+            },
+            "complex_iptm": 0.8776648044586182,
+            "binder_plddt_0_to_100": 92.90442853655134,
+            "distinct_contacting_binder_residues": 23,
+            "distinct_contacting_target_residues": 18,
+            "distinct_contacting_residue_pairs": 63,
+            "interchain_heavy_atom_contacts": 567,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 2.2069585406164745,
+            "contacting_residue_pairs_1_based": [
+              [
+                9,
+                9
+              ],
+              [
+                12,
+                6
+              ],
+              [
+                12,
+                9
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                9
+              ],
+              [
+                13,
+                10
+              ],
+              [
+                15,
+                6
+              ],
+              [
+                16,
+                6
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                9
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                17,
+                8
+              ],
+              [
+                19,
+                6
+              ],
+              [
+                19,
+                66
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                7
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                44
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                23,
+                68
+              ],
+              [
+                26,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                48
+              ],
+              [
+                27,
+                49
+              ],
+              [
+                28,
+                42
+              ],
+              [
+                28,
+                49
+              ],
+              [
+                30,
+                42
+              ],
+              [
+                30,
+                72
+              ],
+              [
+                30,
+                74
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                44
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                31,
+                70
+              ],
+              [
+                33,
+                74
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                70
+              ],
+              [
+                34,
+                71
+              ],
+              [
+                34,
+                72
+              ],
+              [
+                34,
+                73
+              ],
+              [
+                34,
+                74
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                37,
+                73
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                38,
+                8
+              ],
+              [
+                38,
+                69
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                73
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                41,
+                71
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                71
+              ],
+              [
+                49,
+                9
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 1.2709127430527383,
+            "binder_self_aligned_ca_rmsd_angstrom": 0.4160838213237211,
+            "target_aligned_binder_ca_rmsd_angstrom": 1.1829907159436885
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/mpnn_1/seed11/prediction.json",
+          "prediction_sha256": "0eb5a6361ce009683f5a46d92829f3319bece9c06a7f356b63330a7626332d04",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 11,
+            "feature_sha256": "c078426f1cf468a948b73291b8f896e441bf912e303ee955e82f85840011985e",
+            "input_sha256": "f23700061b8214345c046350f4a8becce0270771ad1770e7c52a17fe7daf1f4b",
+            "inference_seconds": 4.982113792008022,
+            "load_seconds": 2.2952398330089636,
+            "total_model_seconds": 7.3233116249903105,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9314243793487549,
+                "1": 0.8775970339775085
+              },
+              "1": {
+                "0": 0.8776648044586182,
+                "1": 0.9618210196495056
+              }
+            },
+            "ptm": 0.9142693281173706,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "eadbe2e30ec78f1d38a30c4816f69944183298417ef72b5c96c21b1586fcc25d",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 92.90442853655134,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.8776648044586182,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": true
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 0.4160838213237211,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 1.1829907159436885,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 1.2709127430527383,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 23,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 18,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 63,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 2.2069585406164745,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.6406661556506066,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.21428571428571427,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [],
+          "passes_screen": true
+        }
+      ],
+      "seed_metric_differences_second_minus_first": {
+        "binder_plddt_0_to_100": 0.08314263480049533,
+        "binder_self_aligned_ca_rmsd_angstrom": 0.01530404193189544,
+        "complex_iptm": -0.014501869678497314,
+        "distinct_contacting_binder_residues": 0.0,
+        "distinct_contacting_residue_pairs": -2.0,
+        "distinct_contacting_target_residues": 0.0,
+        "interchain_heavy_atom_clashes": 0.0,
+        "interchain_heavy_atom_contacts": 6.0,
+        "interchain_minimum_heavy_atom_distance_angstrom": 0.27368903017567625,
+        "max_amino_acid_fraction": 0.0,
+        "maximum_homopolymer_run": 0.0,
+        "refold_target_ca_rmsd_to_input_angstrom": -0.20595465926968815,
+        "sequence_entropy_bits": 0.0,
+        "target_aligned_binder_ca_rmsd_angstrom": -0.4702678050838831
+      },
+      "passing_seeds": 2,
+      "passes_both_seeds": true
+    },
+    {
+      "name": "mpnn_2",
+      "sequence": "SMEEELKKKEEEFRKSLEEWSKIMKNLDKETIEDIRQDLEYLAKQDPILGKIYKKHKEEIDKVFEEALSL",
+      "sequence_metrics": {
+        "sequence_entropy_bits": 3.5888760062488845,
+        "max_amino_acid_fraction": 0.21428571428571427,
+        "maximum_homopolymer_run": 3,
+        "composition_counts": {
+          "A": 2,
+          "D": 5,
+          "E": 15,
+          "F": 2,
+          "G": 1,
+          "H": 1,
+          "I": 6,
+          "K": 13,
+          "L": 8,
+          "M": 2,
+          "N": 1,
+          "P": 1,
+          "Q": 2,
+          "R": 2,
+          "S": 4,
+          "T": 1,
+          "V": 1,
+          "W": 1,
+          "Y": 2
+        }
+      },
+      "trials": [
+        {
+          "seed": 7,
+          "metrics": {
+            "sequence_entropy_bits": 3.5888760062488845,
+            "max_amino_acid_fraction": 0.21428571428571427,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 2,
+              "D": 5,
+              "E": 15,
+              "F": 2,
+              "G": 1,
+              "H": 1,
+              "I": 6,
+              "K": 13,
+              "L": 8,
+              "M": 2,
+              "N": 1,
+              "P": 1,
+              "Q": 2,
+              "R": 2,
+              "S": 4,
+              "T": 1,
+              "V": 1,
+              "W": 1,
+              "Y": 2
+            },
+            "complex_iptm": 0.8584160208702087,
+            "binder_plddt_0_to_100": 90.56471421378,
+            "distinct_contacting_binder_residues": 18,
+            "distinct_contacting_target_residues": 18,
+            "distinct_contacting_residue_pairs": 51,
+            "interchain_heavy_atom_contacts": 463,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 1.837527414761478,
+            "contacting_residue_pairs_1_based": [
+              [
+                12,
+                9
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                9
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                9
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                17,
+                8
+              ],
+              [
+                19,
+                6
+              ],
+              [
+                19,
+                66
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                7
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                44
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                23,
+                68
+              ],
+              [
+                26,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                48
+              ],
+              [
+                27,
+                49
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                44
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                72
+              ],
+              [
+                34,
+                74
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                42
+              ],
+              [
+                35,
+                44
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                35,
+                72
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                38,
+                42
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                72
+              ],
+              [
+                38,
+                74
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                41,
+                74
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                71
+              ],
+              [
+                42,
+                73
+              ],
+              [
+                49,
+                9
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 1.3251987764457709,
+            "binder_self_aligned_ca_rmsd_angstrom": 1.2111216623967858,
+            "target_aligned_binder_ca_rmsd_angstrom": 2.4006724146852405
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/mpnn_2/seed7/prediction.json",
+          "prediction_sha256": "10ecf6a4f5fdc8f1e0ee7bbdc1a82c7d1b0c4b48c81c83adc7bcc6095297deb1",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 7,
+            "feature_sha256": "931b64c4c92c0de28625c678cf5fa8da3faac2528b576dba657a21a8fc0e9856",
+            "input_sha256": "63c9e2a7d975424e10e8edccac75682ac9ef96378a9a949d76ca0be12667dde9",
+            "inference_seconds": 4.994354249996832,
+            "load_seconds": 2.2986525839951355,
+            "total_model_seconds": 7.338505666994024,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9516041278839111,
+                "1": 0.8584160208702087
+              },
+              "1": {
+                "0": 0.852924644947052,
+                "1": 0.9732837677001953
+              }
+            },
+            "ptm": 0.9143149256706238,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "97d586d6c5c31a4f084d613ef7cd16c7cfe7fa6e70eeb8051e92e6ca65d2dc0b",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 90.56471421378,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.8584160208702087,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": true
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 1.2111216623967858,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 2.4006724146852405,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 1.3251987764457709,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 18,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 18,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 51,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 1.837527414761478,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.5888760062488845,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.21428571428571427,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [],
+          "passes_screen": true
+        },
+        {
+          "seed": 11,
+          "metrics": {
+            "sequence_entropy_bits": 3.5888760062488845,
+            "max_amino_acid_fraction": 0.21428571428571427,
+            "maximum_homopolymer_run": 3,
+            "composition_counts": {
+              "A": 2,
+              "D": 5,
+              "E": 15,
+              "F": 2,
+              "G": 1,
+              "H": 1,
+              "I": 6,
+              "K": 13,
+              "L": 8,
+              "M": 2,
+              "N": 1,
+              "P": 1,
+              "Q": 2,
+              "R": 2,
+              "S": 4,
+              "T": 1,
+              "V": 1,
+              "W": 1,
+              "Y": 2
+            },
+            "complex_iptm": 0.8754264712333679,
+            "binder_plddt_0_to_100": 91.21828580583845,
+            "distinct_contacting_binder_residues": 20,
+            "distinct_contacting_target_residues": 18,
+            "distinct_contacting_residue_pairs": 53,
+            "interchain_heavy_atom_contacts": 457,
+            "interchain_heavy_atom_clashes": 0,
+            "interchain_minimum_heavy_atom_distance_angstrom": 1.7406610813136487,
+            "contacting_residue_pairs_1_based": [
+              [
+                12,
+                9
+              ],
+              [
+                12,
+                10
+              ],
+              [
+                13,
+                8
+              ],
+              [
+                13,
+                9
+              ],
+              [
+                13,
+                10
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                8
+              ],
+              [
+                16,
+                9
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                17,
+                8
+              ],
+              [
+                19,
+                6
+              ],
+              [
+                19,
+                66
+              ],
+              [
+                19,
+                68
+              ],
+              [
+                20,
+                6
+              ],
+              [
+                20,
+                7
+              ],
+              [
+                20,
+                8
+              ],
+              [
+                20,
+                44
+              ],
+              [
+                20,
+                68
+              ],
+              [
+                20,
+                69
+              ],
+              [
+                20,
+                70
+              ],
+              [
+                23,
+                44
+              ],
+              [
+                23,
+                47
+              ],
+              [
+                23,
+                68
+              ],
+              [
+                26,
+                47
+              ],
+              [
+                27,
+                44
+              ],
+              [
+                27,
+                47
+              ],
+              [
+                27,
+                48
+              ],
+              [
+                27,
+                49
+              ],
+              [
+                28,
+                49
+              ],
+              [
+                31,
+                42
+              ],
+              [
+                31,
+                44
+              ],
+              [
+                31,
+                49
+              ],
+              [
+                34,
+                42
+              ],
+              [
+                34,
+                74
+              ],
+              [
+                35,
+                8
+              ],
+              [
+                35,
+                42
+              ],
+              [
+                35,
+                44
+              ],
+              [
+                35,
+                70
+              ],
+              [
+                37,
+                74
+              ],
+              [
+                38,
+                42
+              ],
+              [
+                38,
+                70
+              ],
+              [
+                38,
+                71
+              ],
+              [
+                38,
+                72
+              ],
+              [
+                38,
+                73
+              ],
+              [
+                38,
+                74
+              ],
+              [
+                39,
+                8
+              ],
+              [
+                39,
+                9
+              ],
+              [
+                41,
+                73
+              ],
+              [
+                41,
+                74
+              ],
+              [
+                42,
+                9
+              ],
+              [
+                42,
+                73
+              ],
+              [
+                49,
+                9
+              ],
+              [
+                64,
+                8
+              ]
+            ],
+            "refold_target_ca_rmsd_to_input_angstrom": 1.4322349631564362,
+            "binder_self_aligned_ca_rmsd_angstrom": 1.0366622526768394,
+            "target_aligned_binder_ca_rmsd_angstrom": 2.419533237075159
+          },
+          "errors": [],
+          "prediction_json": "experiments/mosaic_af2/ubiquitin/v3/len70-seed8/refolds/mpnn_2/seed11/prediction.json",
+          "prediction_sha256": "6f8704dace6cd624096c2e8a699c1eee40fe686c33fd5826840ede920b6b1883",
+          "provenance": {
+            "model": "Synthyra/Boltz2",
+            "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+            "device": "mps",
+            "profile": "balanced",
+            "precision": "float32",
+            "seed": 11,
+            "feature_sha256": "931b64c4c92c0de28625c678cf5fa8da3faac2528b576dba657a21a8fc0e9856",
+            "input_sha256": "63c9e2a7d975424e10e8edccac75682ac9ef96378a9a949d76ca0be12667dde9",
+            "inference_seconds": 4.983718750008848,
+            "load_seconds": 2.2946522919810377,
+            "total_model_seconds": 7.319077958993148,
+            "pair_chains_iptm": {
+              "0": {
+                "0": 0.9533619284629822,
+                "1": 0.8754264712333679
+              },
+              "1": {
+                "0": 0.8672804832458496,
+                "1": 0.9712838530540466
+              }
+            },
+            "ptm": 0.9216570854187012,
+            "msa_rows_used": 1
+          },
+          "prediction_cif_sha256": "f32ab671fe5795e23637b828c8daaa2f31a39b2467e0b6d58a60e0df9f795213",
+          "checks": {
+            "binder_plddt_0_to_100": {
+              "value": 91.21828580583845,
+              "threshold": 80.0,
+              "comparison": ">=",
+              "passed": true
+            },
+            "complex_iptm": {
+              "value": 0.8754264712333679,
+              "threshold": 0.65,
+              "comparison": ">=",
+              "passed": true
+            },
+            "binder_self_aligned_ca_rmsd_angstrom": {
+              "value": 1.0366622526768394,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "target_aligned_binder_ca_rmsd_angstrom": {
+              "value": 2.419533237075159,
+              "threshold": 3.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "refold_target_ca_rmsd_to_input_angstrom": {
+              "value": 1.4322349631564362,
+              "threshold": 2.0,
+              "comparison": "<=",
+              "passed": true
+            },
+            "distinct_contacting_binder_residues": {
+              "value": 20,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_target_residues": {
+              "value": 18,
+              "threshold": 8,
+              "comparison": ">=",
+              "passed": true
+            },
+            "distinct_contacting_residue_pairs": {
+              "value": 53,
+              "threshold": 20,
+              "comparison": ">=",
+              "passed": true
+            },
+            "interchain_minimum_heavy_atom_distance_angstrom": {
+              "value": 1.7406610813136487,
+              "threshold": 1.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "sequence_entropy_bits": {
+              "value": 3.5888760062488845,
+              "threshold": 2.5,
+              "comparison": ">=",
+              "passed": true
+            },
+            "max_amino_acid_fraction": {
+              "value": 0.21428571428571427,
+              "threshold": 0.3,
+              "comparison": "<=",
+              "passed": true
+            },
+            "maximum_homopolymer_run": {
+              "value": 3,
+              "threshold": 4,
+              "comparison": "<=",
+              "passed": true
+            }
+          },
+          "failed_criteria": [],
+          "passes_screen": true
+        }
+      ],
+      "seed_metric_differences_second_minus_first": {
+        "binder_plddt_0_to_100": 0.653571592058455,
+        "binder_self_aligned_ca_rmsd_angstrom": -0.17445940971994633,
+        "complex_iptm": 0.01701045036315918,
+        "distinct_contacting_binder_residues": 2.0,
+        "distinct_contacting_residue_pairs": 2.0,
+        "distinct_contacting_target_residues": 0.0,
+        "interchain_heavy_atom_clashes": 0.0,
+        "interchain_heavy_atom_contacts": -6.0,
+        "interchain_minimum_heavy_atom_distance_angstrom": -0.09686633344782924,
+        "max_amino_acid_fraction": 0.0,
+        "maximum_homopolymer_run": 0.0,
+        "refold_target_ca_rmsd_to_input_angstrom": 0.10703618671066528,
+        "sequence_entropy_bits": 0.0,
+        "target_aligned_binder_ca_rmsd_angstrom": 0.018860822389918486
+      },
+      "passing_seeds": 2,
+      "passes_both_seeds": true
+    }
+  ],
+  "passing_candidates": 2,
+  "interpretation": "Computationally consistent candidate(s), pending experimental validation."
+}

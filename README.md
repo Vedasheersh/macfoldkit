@@ -97,6 +97,16 @@ The deterministic fixed-order ProteinMPNN objective is a starting point, not a
 complete design-quality filter. Refold candidates and assess the intended task.
 `--device cpu` provides a reference path. See [design scope](docs/design.md).
 
+A separate [full AF2-guided design experiment](experiments/mosaic_af2/README.md)
+completes de novo monomer optimization, ProteinMPNN redesign and independent
+Boltz2 refolding on the Mac, and adds a bounded ubiquitin binder workflow.
+A contact-loss backward workaround reduced the tested full CPU/MPS gradient
+error from roughly 3% to 0.15% (monomer) and 0.048% (complex). It remains outside
+the released CLI because backend and design-quality validation are limited.
+The first full binder workflow completed in 5.6 minutes before independent
+refolding; all three candidates failed the frozen computational screen.
+See also the [BindCraft2 Mac feasibility audit](docs/bindcraft2-feasibility.md).
+
 ## Evidence
 
 The underlying optimized Boltz runner was tested on monomers and complexes up to
@@ -111,6 +121,8 @@ A 76-residue Mosaic redesign with 36 substitutions refolded with Boltz2 to
 agreed to relative L2 error 1.28e-6. This is an in-silico example, not evidence
 of preserved biological function. [Release validation](docs/validation.md)
 separates those earlier results from tests of the packaged installer.
+[Lessons](docs/lessons.md) records how these numbers were arrived at, including
+measurements that were published here and later withdrawn.
 
 ## Contributing and upstream patches
 

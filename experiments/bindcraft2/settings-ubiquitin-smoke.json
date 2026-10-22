@@ -1,0 +1,28 @@
+{
+  "campaign_name": "ubiquitin_mac_smoke",
+  "project_folder": "results/ubiquitin_mac_smoke",
+  "modality": "binder",
+  "targets": [
+    { "name": "ubiquitin", "target_path": "../mosaic_af2/ubiquitin/ubiquitin-target.cif", "chains": "A" }
+  ],
+  "binder_lengths": [60, 60],
+  "number_of_final_designs": 1,
+  "max_trajectories": 1,
+  "design_models": 1,
+  "screen_steps": 3,
+  "refine_steps": 2,
+  "anneal_steps": 2,
+  "harden_steps": 1,
+  "mutate_steps": 0,
+  "min_plddt_screen": null,
+  "min_plddt_refine": null,
+  "min_plddt_anneal": null,
+  "min_plddt_harden": null,
+  "min_plddt_mutate": null,
+  "min_plddt_final": null,
+  "min_iptm_anneal": null,
+  "min_iptm_harden": null,
+  "min_iptm_mutate": null,
+  "min_iptm_final": 0.0,
+  "save_design_sequences": true
+}

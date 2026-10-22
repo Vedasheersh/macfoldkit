@@ -1,0 +1,21 @@
+{
+  "backend": "mps",
+  "jax": "0.11.2",
+  "device": "MPS:0",
+  "model": "model_1_ptm",
+  "length": 40,
+  "bfloat16": false,
+  "seconds_first_call_including_compile": 5.8743759999924805,
+  "seconds_second_call": 0.549116000009235,
+  "loss": -0.5955893397331238,
+  "plddt_mean": 0.5955893605947494,
+  "ptm": 0.1668466329574585,
+  "grad_norm": 0.07537339890791554,
+  "grad_absmax": 0.01789422333240509,
+  "grad_zero_fraction": 0.375,
+  "grad_zero_fraction_real_residues": 0.0,
+  "zero_rows": 24,
+  "zero_rows_among_real_residues": 0,
+  "finite": true,
+  "peak_rss_gib": 2.99639892578125
+}

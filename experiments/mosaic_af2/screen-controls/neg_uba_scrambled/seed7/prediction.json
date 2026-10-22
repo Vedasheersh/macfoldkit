@@ -1,0 +1,61 @@
+{
+  "model": "Synthyra/Boltz2",
+  "revision": "bce98f7ce914d468182726b5a0fbd23737167875",
+  "device": "mps",
+  "weight_dtype": "float32",
+  "input": "/Users/vsb/Documents/Codex/2026-09-26/can/work/screen-controls/neg_uba_scrambled.yaml",
+  "input_sha256": "9ab16c6e8874659d844e0e547ba14de8d04454226e4fc55cb82a2fe7d3e9588a",
+  "chains": [
+    {
+      "id": "A",
+      "asym_id": 0,
+      "sequence": "METLEVRNDCASDESDQKAFPILSLTSEAIVKLDDGPICKIPMNN"
+    },
+    {
+      "id": "B",
+      "asym_id": 1,
+      "sequence": "MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"
+    }
+  ],
+  "total_residues": 121,
+  "atoms": 943,
+  "profile": "balanced",
+  "recycling_steps": 1,
+  "sampling_steps": 100,
+  "precision": "float32",
+  "seed": 7,
+  "diffusion_samples": 1,
+  "msa_rows_input": 1,
+  "msa_rows_used": 1,
+  "msa_selection": "ordered prefix of official features; paired and best-matching rows first",
+  "feature_path": "/Users/vsb/Documents/Codex/2026-09-26/can/work/macfoldkit-release-test/jobs/boltz/9ab16c6e8874659d844e0e547ba14de8d04454226e4fc55cb82a2fe7d3e9588a/snapshots/004d8a831d2e69175244035045a824a8c5357f448d206ddd1bc555fed575560b.pt",
+  "optimization": {
+    "compiled_pair_update": true,
+    "pair_precision": "float32",
+    "pair_chunk": 32,
+    "torch_version": "2.14.0"
+  },
+  "feature_sha256": "004d8a831d2e69175244035045a824a8c5357f448d206ddd1bc555fed575560b",
+  "processed_dir": "/Users/vsb/Documents/Codex/2026-09-26/can/work/macfoldkit-release-test/jobs/boltz/9ab16c6e8874659d844e0e547ba14de8d04454226e4fc55cb82a2fe7d3e9588a/preprocess-59zg1247",
+  "feature_cache_version": 2,
+  "preprocessing_seed": 42,
+  "plddt_mean": 0.7069969773292542,
+  "complex_plddt": 0.7069969773292542,
+  "ptm": 0.7125439047813416,
+  "iptm": 0.3206249177455902,
+  "confidence_score": 0.629722535610199,
+  "pair_chains_iptm": {
+    "0": {
+      "0": 0.4537197947502136,
+      "1": 0.3206249177455902
+    },
+    "1": {
+      "0": 0.2849266827106476,
+      "1": 0.9446390867233276
+    }
+  },
+  "load_seconds": 2.2585764169925824,
+  "inference_seconds": 4.1174713330110535,
+  "total_model_seconds": 6.413754875015002,
+  "torch_version": "2.14.0"
+}
